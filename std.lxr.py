@@ -100,6 +100,16 @@ class LEXER:
             else:
                 return None, LexerError(f"Invalid character type! Got {char_type}.", current_ix + buffer,  1, expr, "InvalidCharacterTypeError")
 
+        while not depth and self.in_repl and not tokens[-1].is_list and tokens[-1].token_type == "operator":
+            new_source = ""
+            while True:
+                new_source = input("... ")
+                if new_source.lstrip(" "):
+                    new_source = "\n" + new_source
+                    break
+            new_tokens, err = self.lex(new_source, buffer + len(expr))
+            if err: return None, err
+            tokens += new_tokens
         return tokens, None
 
 std_lxr = module(LEXER)
