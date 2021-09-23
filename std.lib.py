@@ -6,6 +6,7 @@ class LIBRARY:
         self.values = {
             "true": True,
             "false": False,
+            "()": tuple()
         }
         self.variables = {}
 
