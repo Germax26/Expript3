@@ -1,8 +1,11 @@
 from exp_info import *
 
 class VARIABLE_LIST:
-    def __init__(self):
+    def __init__(self, *initital_vars):
         self.vars = {}
+
+        for var in initital_vars:
+            self.add(var)
 
     def add(self, var):
         self.vars[var.name] = var.func
@@ -19,7 +22,7 @@ class VARIABLE_LIST:
     
     def union(self, other):
         new_list = VARIABLE_LIST()
-        new_list.vars = self.vars | other.vars
+        new_list.vars = {**self.vars, **other.vars}
         return new_list
 
 class VARIABLE:
@@ -27,10 +30,10 @@ class VARIABLE:
         self.name = name
         self.value = value
 
-        def get_value_of_variable():
+        def get_val():
             return self.value, None
         
-        self.func = func or get_value_of_variable
+        self.func = func or get_val
 
 exp_variable = module(__name__)
 
