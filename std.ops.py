@@ -69,14 +69,14 @@ class Operators:
             valid = [tuple, str]
             def function(right, _):
                 return right[::-1], None
-    class Binary: # [$]
+    class Binary:
         class Cons:
             valid = [[object, tuple]]
             def function(left, right, context):
                 return (left,) + right, None
 
-        class Special: # [-]
-            class Radix: # [x]
+        class Special:
+            class Radix:
                 tags = ["right"]
                 valid = [[int], [tuple]]
                 def function(left, _, context):
@@ -99,7 +99,7 @@ class Operators:
 
                     return None, InterpreterError(f"Index out of range. List was {len_left} element{'s' if len_left > 1 else ''} long.", *context.self.uberspan(), context.expr, "IndexOutOfRangeError")
                     
-            class Application: # [-]
+            class Application:
                 tags = ["right"]
                 valid = [[Function], [FunctionType]]
                 def function(left, _, context):
@@ -111,81 +111,80 @@ class Operators:
 
                     return left(right, context)
 
-
-        class Mathematics: # [-]
-            class Arithmetic: # [-]
-                class Primary: # [x]
-                    class Addition: # [x]
+        class Mathematics:
+            class Arithmetic:
+                class Primary:
+                    class Addition:
                         valid = [[int, int], [float, float], [int, float], [float, int], [str, str], [tuple, tuple]]
                         def function(left, right, _):
                             return left + right, None
-                    class Subtraction: # [x]
+                    class Subtraction:
                         valid = [[int, int], [float, float], [int, float], [float, int]]
                         def function(left, right, _):
                             return left - right, None
-                class Secondary: # [-]
-                    class Multiplication: # [x]
+                class Secondary:
+                    class Multiplication:
                         valid = [[int, int], [float, float], [int, float], [float, int], [str, int], [tuple, int]]
                         def function(left, right, _):
                             return left * right, None
-                    class Division: # [x]
+                    class Division:
                         valid = [[int, int], [float, float], [int, float], [float, int]]
                         def function(left, right, _):
                             if right == 0:
                                 return None, InterpreterError("Cannot divide by 0.", _.self.span_left, _.self.right.left_span() + _.self.right.right_span() - _.self.span_left, _.expr, "DivisionByZeroError")
                             return left / right, None
-                    class Modulo: # [.]
+                    class Modulo:
                         pass
-                    class Quotient: # [.]
+                    class Quotient:
                         pass
-                class Tertiary: # [.]
-                    class Exponentiation: # [x]
+                class Tertiary:
+                    class Exponentiation:
                         valid = [[int, int], [float, float], [int, float], [float, int]]
                         def function(left, right, _):
                             return left ** right, None
-            class Trigenometry: # [.]
+            class Trigenometry:
                 pass
 
-        class Boolean: # [-]
-            class Comparisions: # [x]
-                class LessThan: # [x]
+        class Boolean:
+            class Comparisions:
+                class LessThan:
                     valid = [[int, int], [float, float], [int, float], [float, int]]
                     def function(left, right, _):
                         return left < right, None
-                class LessThanOrEqualTo: # [x]
+                class LessThanOrEqualTo:
                     valid = [[int, int], [float, float], [int, float], [float, int]]
                     def function(left, right, _):
                         return left <= right, None
-                class GreaterThan: # [x]
+                class GreaterThan:
                     valid = [[int, int], [float, float], [int, float], [float, int]]
                     def function(left, right, _):
                         return left > right, None
-                class GreaterThanOrEqualTo: # [x]
+                class GreaterThanOrEqualTo:
                     valid = [[int, int], [float, float], [int, float], [float, int]]
                     def function(left, right, _):
                         return left >= right, None
-                class EqualTo: # [x]
+                class EqualTo:
                     valid = [[object, object]]
                     def function(left, right, _):
                         return left == right, None
-                class NotEqualTo: # [x]
+                class NotEqualTo:
                     valid = [[object, object]]
                     def function(left, right, _):
                         return left != right, None
-            class Bitwise: # [.]
-                class And: # [ ]
+            class Bitwise:
+                class And:
                     pass
-                class Or: # [ ]
+                class Or:
                     pass
-            class Operators: # [.]
-                class And: # [ ]
+            class Operators:
+                class And:
                     pass
-                class Or: # [ ]
+                class Or:
                     pass
-            class Tests: # [.]
+            class Tests:
                 pass
         
-        class Lambda: # [-]
+        class Lambda:
             tags = ["left", "right"]
             valid = []
             def function(_, __, context):
@@ -193,7 +192,7 @@ class Operators:
                     return None, InterpreterError("An expression cannot be the parameter of a function.", *context.left.uberspan(), context.expr, "ExpressionParameterError")
                 return Function(context), None
 
-        class Binding: # [x]
+        class Binding:
             tags = ["left", "right"]
             valid = []
             def function(_, __, context):
@@ -201,7 +200,7 @@ class Operators:
                     return None, InterpreterError("Cannot bind value to expression.", *context.left.uberspan(), context.expr, "CannotAssignToExpressionError")
                 return Binding(context), None
 
-        class Sequention: # [x]
+        class Sequention:
             tags = ["right"]
             valid = [[object]]
             def function(left, _, context):
@@ -211,39 +210,42 @@ class Operators:
 
 class OPERATORS:
     def __init__(self):
-        self.unary = [
-            Category("unary")
+        self.categories = [
+            Category("Special –– Radix operator")
+                .add(".", Operators.Binary.Special.Radix),
+            
+            Category("Unary –– General unary operators", "unary")
                 .add('+', Operators.Unary.Positive)
                 .add("-", Operators.Unary.Negative)
-                .add("!", Operators.Unary.Negation)
-                .add("len", Operators.Unary.Length)
-                .add("rev", Operators.Unary.Reverse)
-        ][0]
-        self.binary = [
-            Category("Construct", "reverse-collapse")
-                .add(":", Operators.Binary.Cons), 
+                .add("!", Operators.Unary.Negation),
 
-            Category("Special")
-                .add(".", Operators.Binary.Special.Radix)
+            Category("Special –– Application operator")
                 .add("<-", Operators.Binary.Special.Application),
 
-            Category("Mathematics.Arithmetic.Tertiary")
+            Category("Construct –– List construction operator", "reverse-collapse")
+                .add(":", Operators.Binary.Cons),
+
+            Category("Unary –– List-focused  unary operators", "unary")
+                .add("len", Operators.Unary.Length)
+                .add("rev", Operators.Unary.Reverse),
+
+            Category("Mathematics.Arithmetic.Tertiary –– High precedence operators")
                 .add("**", Operators.Binary.Mathematics.Arithmetic.Tertiary.Exponentiation),
 
-            Category("Mathematics.Arithmetic.Secondary")
+            Category("Mathematics.Arithmetic.Secondary –– Medium precedence operators")
                 .add("*", Operators.Binary.Mathematics.Arithmetic.Secondary.Multiplication)
                 .add("/", Operators.Binary.Mathematics.Arithmetic.Secondary.Division)
                 .add("%", Operators.Binary.Mathematics.Arithmetic.Secondary.Modulo),
 
-            Category("Mathematics.Arithmetic.Primary")
+            Category("Mathematics.Arithmetic.Primary –– Low precedence operators")
                 .add("+", Operators.Binary.Mathematics.Arithmetic.Primary.Addition)
                 .add("-", Operators.Binary.Mathematics.Arithmetic.Primary.Subtraction),
 
-            Category("Boolean.Bitwise"),
+            Category("Boolean.Bitwise –– Bitwise boolean operators"),
 
-            Category("Boolean.Tests"),
+            Category("Boolean.Tests –– Predicate tests"),
 
-            Category("Boolean.Comparisions")
+            Category("Boolean.Comparisions –– Boolean comparision operators")
                 .add("<", Operators.Binary.Boolean.Comparisions.LessThan)
                 .add("<=", Operators.Binary.Boolean.Comparisions.LessThanOrEqualTo)
                 .add(">", Operators.Binary.Boolean.Comparisions.GreaterThan)
@@ -251,23 +253,24 @@ class OPERATORS:
                 .add("==", Operators.Binary.Boolean.Comparisions.EqualTo)
                 .add("!=", Operators.Binary.Boolean.Comparisions.NotEqualTo),
 
-            Category("Boolean.Operators"),
+            Category("Boolean.Operators –– Boolean logic operators"),
 
-            Category("Lambda", "reverse-collapse")
+            Category("Lambda –– Lambda function operator", "reverse-collapse")
                 .add("=>", Operators.Binary.Lambda),
 
-            Category("Binding")
+            Category("Binding –– Binding operator", "reverse-collapse")
                 .add("=", Operators.Binary.Binding),
 
-            Category("Sequention", "reverse-collapse")
+            Category("Sequention –– Sequention operator", "reverse-collapse")
                 .add(";", Operators.Binary.Sequention)
         ]
         self.alpha = []
-        for operator in self.unary.operators:
-            for char in operator:
-                if char in string.ascii_letters+string.digits + "_":
-                    self.alpha.append(operator)
-                    break
+        for category in self.categories:
+            for operator in category.operators:
+                for char in operator:
+                    if char in string.ascii_letters+string.digits + "_":
+                        self.alpha.append(operator)
+                        break
 
 std_ops = module(OPERATORS)
 
