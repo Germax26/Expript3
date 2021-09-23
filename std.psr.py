@@ -44,7 +44,7 @@ class PARSER:
             
             if current_type == next_type == "operator":
                 if current_ix + 1 == nodes.length() or nodes[current_ix + 1].node_type == 'operator':
-                    return None, ParserError(f"Unexpected operator '{nodes[current_ix + (plus_one := current_ix + 1 != nodes.length())].value}'.", *nodes[current_ix + plus_one].span, expr, "UnexpectedOperatorError").add_callback("in unary collapse", None)
+                    return None, ParserError(f"Unexpected operator '{nodes[current_ix + (plus_one := current_ix + 1 != nodes.length())].value}'.", *nodes[current_ix + plus_one].span, expr, "UnexpectedOperatorError")
 
                 nodes[current_ix].right = nodes[current_ix+1]
                 nodes[current_ix].node_type = 'value'
@@ -55,7 +55,7 @@ class PARSER:
                 has_changed = True
             
             if current_type == next_type == "value":
-                return None, ParserError(f"Unexpected value '{nodes[current_ix].value}''.", *nodes[current_ix].uberspan(), expr, "UnexpectedValueError").add_callback("in unary collapse", None)
+                return None, ParserError(f"Unexpected value '{nodes[current_ix].value}''.", *nodes[current_ix].uberspan(), expr, "UnexpectedValueError")
 
             current_ix -= 1
 
