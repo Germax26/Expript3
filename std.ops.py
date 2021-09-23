@@ -139,7 +139,10 @@ class Operators:
                     class Quotient: # [.]
                         pass
                 class Tertiary: # [.]
-                    pass
+                    class Exponentiation: # [x]
+                        valid = [[int, int], [float, float], [int, float], [float, int]]
+                        def function(left, right, _):
+                            return left ** right, None
             class Trigenometry: # [.]
                 pass
 
@@ -224,7 +227,8 @@ class OPERATORS:
                 .add(".", Operators.Binary.Special.Radix)
                 .add("<-", Operators.Binary.Special.Application),
 
-            Category("Mathematics.Arithmetic.Tertiary"),
+            Category("Mathematics.Arithmetic.Tertiary")
+                .add("**", Operators.Binary.Mathematics.Arithmetic.Tertiary.Exponentiation),
 
             Category("Mathematics.Arithmetic.Secondary")
                 .add("*", Operators.Binary.Mathematics.Arithmetic.Secondary.Multiplication)
