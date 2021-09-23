@@ -13,3 +13,5 @@ class LIBRARY:
 std_lib = module(LIBRARY)
 
 info = package_info(std_lib, "std.lib@v1 –– the built-in library package", [exp_error, exp_info])
+
+if __name__ == "__main__": info()
