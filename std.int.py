@@ -57,7 +57,7 @@ class INTERPRETER:
                                     return None, OperatorError(f"Unspecified function for binary operator '{root.value}'.\nUnable to complete calculation.", *root.span, source, "UnspecifiedBinaryOperatorFunctionError")
                                 raise err
                         return None, OperatorError(f"Missing left operand for binary operator {root.value}", *root.span, source, "MissingLeftOperandForBinaryOperatorError")
-                    else:
+                    elif not root.left:
                         operator = category[root.value]
 
                         right = None
