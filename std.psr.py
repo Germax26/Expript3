@@ -21,7 +21,7 @@ class PARSER:
 
         for i, token in enumerate(tokens.tokens):
             if not token.is_list and token.token_type not in ["value", "operator"]:
-                return None, ParserError(f"Invalid token. Got token type '{token.token_type}'.", token.span_left, token.span_right, expr, "InvalidTokenError").add_callback("in token conversion")
+                return None, ParserError(f"Invalid token. Got token type '{token.token_type}'.", token.span_left, token.span_right, expr, "InvalidTokenError")
             new_node, err = to_node(self, expr, token, operators, depth)
             if err: return None, err
             nodes.append(new_node)
@@ -101,7 +101,7 @@ class PARSER:
             nodes.pop(1)
 
         if nodes.length() > 1:
-            return None, ParserError("Paraihs!", nodes[1].left_span(), len(expr) - nodes[1].left_span(), expr, "ParaihNodeError").add_callback("after binary collapse")
+            return None, ParserError("Paraihs!", nodes[1].left_span(), len(expr) - nodes[1].left_span(), expr, "ParaihNodeError")
 
         return nodes[0], None
 
