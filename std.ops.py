@@ -2,6 +2,8 @@ from exp_category import *
 from exp_error import *
 from exp_variable import *
 from exp_info import *
+
+import string
 from types import FunctionType
 
 class Binding:
@@ -37,8 +39,6 @@ class Function:
 
         return self.context.evaluate(variables=self.context.variables.union(VARIABLE_LIST(VARIABLE(self.param, func=get_param))))
         
-        # return None, OperatorError("I haven't implemented called functions yet.", *context.self.uberspan(), context.expr, "FFFFF")
-
     def __repr__(self):
         if self.name:
             return f"<fn {self.name}>"
@@ -62,9 +62,13 @@ class Operators:
             def function(right, _):
                 return not right, None
         class Length:
-            valid = [tuple]
+            valid = [tuple, str]
             def function(right, _):
                 return len(right), None
+        class Reverse:
+            valid = [tuple, str]
+            def function(right, _):
+                return right[::-1], None
     class Binary: # [$]
         class Cons:
             valid = [[object, tuple]]
@@ -210,6 +214,7 @@ class OPERATORS:
                 .add("-", Operators.Unary.Negative)
                 .add("!", Operators.Unary.Negation)
                 .add("len", Operators.Unary.Length)
+                .add("rev", Operators.Unary.Reverse)
         ][0]
         self.binary = [
             Category("Construct", "reverse-collapse")
@@ -253,7 +258,12 @@ class OPERATORS:
             Category("Sequention", "reverse-collapse")
                 .add(";", Operators.Binary.Sequention)
         ]
-        self.alpha = ["len"]
+        self.alpha = []
+        for operator in self.unary.operators:
+            for char in operator:
+                if char in string.ascii_letters+string.digits + "_":
+                    self.alpha.append(operator)
+                    break
 
 std_ops = module(OPERATORS)
 
