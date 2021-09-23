@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+from types import FunctionType
+
 from exp_package import *
 from exp_info import *
 from exp_variable import *
@@ -51,6 +53,7 @@ interpreter = int.INTERPRETER(lexer, parser)
 operators = ops.OPERATORS()
 library = lib.LIBRARY()
 
+lexer.operators = operators
 parser.debug = debug
 
 variables = VARIABLE_LIST()
@@ -76,15 +79,16 @@ def resolve(source):
     if resolve_err(err): return
     if type(result) == str:
         print(f"'{result}'")
-    elif type(result) == type(lambda:1):
+    elif type(result) == FunctionType:
         print(f"<fn {str(result).split(' ')[1]}>")
-    else:
-        print(str(result))
+    elif type(result) == tuple and len(result) == 1:
+        print(f"({result[0]})")
+    elif printstr := str(result): print(printstr)
 
-# for variable in library.variables:
-#     result, err = evaluate(library.variables[variable], lexer, parser, interpreter, operators, variables)
-#     if err: err.display(); sys.exit()
-#     variables.add(VARIABLE(variable, result))
+for variable in library.variables:
+    result, err = evaluate(library.variables[variable], lexer, parser, interpreter, operators, variables)
+    if err: err.display(); sys.exit()
+    variables.add(VARIABLE(variable, result))
 
 if src:
     try:
@@ -92,7 +96,8 @@ if src:
         source = _file.read()
         _file.close()
 
-        resolve(source)
+        if source.lstrip(" "):
+            resolve(source)
 
     except IOError:
         print(f"The source {src} could not be loaded.")
@@ -107,6 +112,10 @@ def get_info():
 if info:
     get_info()
     sys.exit()
+
+print("Use '^C' to enter the command palette.")
+
+lexer.in_repl = True
 
 while True:
     try:
