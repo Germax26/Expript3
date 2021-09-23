@@ -3,12 +3,14 @@ def evaluate(source, lexer, parser, interpreter, operators, variables, debug=Fal
     tokens, err = lexer.lex(source)
     if err: return None, err
 
+    final_source = tokens.full
+
     if debug:
         print("Tokens:")
         tokens.display()
         print()
 
-    root, err = parser.parse(source, tokens, operators)
+    root, err = parser.parse(final_source, tokens, operators)
     if err: return None, err
 
     if debug:
@@ -16,7 +18,7 @@ def evaluate(source, lexer, parser, interpreter, operators, variables, debug=Fal
         root.display()
         print()
 
-    return interpreter.interpret(source, root, operators, variables)
+    return interpreter.interpret(final_source, root, operators, variables)
 
 if __name__ == "__main__":
     print(f"It looks like you tried to run {__file__}!")
