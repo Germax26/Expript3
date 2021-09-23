@@ -1,10 +1,11 @@
 from exp_info import *
 
 class TOKEN_LIST:
-    def __init__(self, buffer = 0):
+    def __init__(self, expr, buffer = 0):
         self.tokens = []
         self.buffer = buffer
         self.is_list = True
+        self.full = expr
 
     def __setitem__(self, index, value):
         self.tokens[index] = value
@@ -21,6 +22,11 @@ class TOKEN_LIST:
 
     def append(self, token):
         self.tokens.append(token)
+
+    def __add__(self, other):
+        new_tokens = TOKEN_LIST(self.full + other.full, buffer=self.buffer)
+        new_tokens.tokens = self.tokens + other.tokens
+        return new_tokens
 
     def pop(self, index):
         self.tokens.pop(index)
