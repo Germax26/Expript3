@@ -14,7 +14,7 @@ def Identity(f, _):
 def Mockingbird(f, context):
     if callable(f):
         return f(f, context)
-    return None, InterpreterError("Can't call given input on itself.\n" + str(err), *context.right.span, context.expr, "MockingbirdError")
+    return None, InterpreterError("Can't call given input on itself.", *context.right.span, context.expr, "MockingbirdError")
 
 class LIBRARY:
     def __init__(self):
