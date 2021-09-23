@@ -5,14 +5,18 @@ from exp_info import *
 
 class LEXER:
     def __init__(self):
-        pass
+        self.in_repl = False
+        self.operators = None
 
-    def lex(self, expr, buffer=0, depth=0):
+    def lex(self, expr:str, buffer:int=0, depth:int=0) -> TOKEN_LIST:
+
+        if expr.lstrip(" ") == "":
+            return None, LexerError("Empty expression!", buffer, 1, expr, "EmptyExpressionError")
 
         is_at_end = False
         current_ix = -1
         current_char = None
-        tokens = TOKEN_LIST()
+        tokens = TOKEN_LIST(expr)
 
         def advance():
             nonlocal current_char, current_ix, is_at_end
@@ -20,7 +24,7 @@ class LEXER:
             is_at_end = current_ix >= len(expr)
             current_char = expr[current_ix] if not is_at_end else None
 
-        def get_char_type(char):
+        def get_char_type(char:str):
             if char in " \n\t": return "white-space"
             if char == "(": return "left-paren"
             if char == ")": return "right-paren"
@@ -61,6 +65,8 @@ class LEXER:
                 while not is_at_end and get_char_type(current_char) == char_type:
                     current += current_char
                     advance()
+                if self.operators and char_type == "value" and current in self.operators.alpha:
+                    char_type = "operator"
                 tokens.append(TOKEN(current, char_type, current_origin + buffer, len(current)))
 
             elif char_type == "left-paren":
@@ -81,13 +87,16 @@ class LEXER:
 
                 if is_at_end:
                     return None, LexerError("Unmatched left parenthesis!", current_origin + buffer, 1, expr, "UnmatchedLeftParenthesisError")
+                
                 if current_ix - current_origin == 1:
-                    return None, LexerError("Empty subexpression!", current_origin, 2, expr, "EmptySubexpressionError")   
+                    tokens.append(TOKEN("()", "value", current_origin, 2))
+                    advance()
+                    continue
                 
                 advance()    
 
                 subtokens, err = self.lex(current, current_origin + buffer + 1, depth + 1)
-                if err: return None, err.add_callback("in subexpression")
+                if err: return None, err
                 tokens.append(subtokens)
 
             elif char_type == "right-paren":
@@ -99,7 +108,7 @@ class LEXER:
 
             else:
                 return None, LexerError(f"Invalid character type! Got {char_type}.", current_ix + buffer,  1, expr, "InvalidCharacterTypeError")
-
+        
         while not depth and self.in_repl and not tokens[-1].is_list and tokens[-1].token_type == "operator":
             new_source = ""
             while True:
