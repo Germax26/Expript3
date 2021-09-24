@@ -2,6 +2,7 @@ from exp_category import *
 from exp_error import *
 from exp_variable import *
 from exp_info import *
+from exp_type import *
 
 import string
 from types import FunctionType
@@ -23,29 +24,49 @@ class Binding:
     def __repr__(self): return ""
 
 class Function:
-    def __init__(self, context, name=None):
-        self.param = context.left.value
+    def __init__(self, context, name=None, override=None, types=[]):
+        if context:
+            self.param = context.left.value
         self.context = context
         self.name = name
+        self.override = override
+        self.types = types
 
     def __call__(self, _, context):
         right = {}
+
         def get_param():
             # nonlocal right
-            if right: return right["right"]
-            right["right"] = context.evaluate()
-            result = get_param()
-            return result
+            if right: return right["_"]
+            right["_"] = context.evaluate()
+            return get_param()
 
-        return self.context.evaluate(variables=self.context.variables.union(VARIABLE_LIST(VARIABLE(self.param, func=get_param))))
-        
+        if self.types:
+            argument, err = get_param()
+            if err: return None, err
+            argument_type = type(argument)
+            for _type in self.types:
+                if issubclass(argument_type, _type):
+                    break
+            else:
+                return None, InterpreterError(f"Unpermitted type '{stringify(argument_type)}' for {str(self)}. Expected otherwise.", *context.self.uberspan(), context.expr, "UnpermittedTypeError")
+
+        try:
+            if self.override:
+                if right: param = get_param()
+                return self.override(self, param, context)
+
+            return self.context.evaluate(variables=self.context.variables.union(VARIABLE_LIST(VARIABLE(self.param, func=get_param))))
+        except RecursionError:
+            return None, InterpreterError("Too much recursion.", *context.self.uberspan(), context.expr, "ExcessiveRecursionError")
+            
     def __repr__(self):
         if self.name:
             return f"<fn {self.name}>"
         return f"<fn of {self.param}>"
 
     def copy(self, new_name=None):
-        return Function(self.context, new_name)
+        return Function(self.context, new_name, self.override, self.types)
 
 class Operators:
     class Unary: # [$]
@@ -225,10 +246,6 @@ class OPERATORS:
             Category("Construct –– List construction operator", "reverse-collapse")
                 .add(":", Operators.Binary.Cons),
 
-            Category("Unary –– List-focused  unary operators", "unary")
-                .add("len", Operators.Unary.Length)
-                .add("rev", Operators.Unary.Reverse),
-
             Category("Mathematics.Arithmetic.Tertiary –– High precedence operators")
                 .add("**", Operators.Binary.Mathematics.Arithmetic.Tertiary.Exponentiation),
 
@@ -274,6 +291,6 @@ class OPERATORS:
 
 std_ops = module(OPERATORS)
 
-info = package_info(std_ops, "std.ops@v2 –– the standard operators", [exp_category, exp_error, exp_variable, exp_info])
+info = package_info(std_ops, "std.ops@v2 –– the standard operators", [exp_category, exp_error, exp_variable, exp_info, exp_type])
 
 if __name__ == "__main__": info()

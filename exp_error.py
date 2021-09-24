@@ -46,7 +46,7 @@ class Error(EnvironmentError):
         self.error_scope = scope
         return self
 
-    def add_callback(self, callback, _):
+    def add_callback(self, callback, _=None):
         if self.callbacks and self.callbacks[-1][0] == callback:
             self.callbacks[-1][2] += 1
         else:  

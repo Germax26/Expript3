@@ -66,11 +66,6 @@ def resolve_err(err):
         try:
             err.display()
         except AttributeError:
-            # strerr = str(err)
-            # if strerr[:1] == "'" and strerr[-25:] == "' object is not callable":
-            #     print("Uncallable object")
-            # else:
-            #     print(f"Internal error: {err}.")
             print("Internal error:", err)
     return err
 
