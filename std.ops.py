@@ -130,7 +130,10 @@ class Operators:
                     right, err = context.evaluate()
                     if err: return None, err
 
-                    return left(right, context)
+                    try:
+                        return left(right, context)
+                    except RecursionError:
+                        return None, InterpreterError("Too much recursion.", *context.self.span, context.expr, "RecursionError")
 
         class Mathematics:
             class Arithmetic:
