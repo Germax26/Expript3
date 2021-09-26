@@ -50,6 +50,19 @@ class NODE:
         if self.left : self.left .display(depth + 1, buffer)
         if self.right: self.right.display(depth + 1, buffer)
 
+    def string(self, depth=0):
+        result = ""
+
+        if self.left: result += self.left.string(depth+1) + " "
+
+        result += self.value
+
+        if self.right: result += " " + self.right.string(depth+1)
+
+        if depth and (self.left or self.right): result = f"({result})"
+
+        return result
+
     def left_span(self):
         if self.left:
             return self.left.left_span() - self.in_sub
