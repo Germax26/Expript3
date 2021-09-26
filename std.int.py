@@ -4,6 +4,8 @@ from exp_variable import *
 from exp_info import *
 from exp_package import *
 
+# std_ops = import_packages({"ops": path("std")})["ops"]
+
 def stringify(x): return str(type(x))[8:-2].split('.')[-1]
 
 class INTERPRETER:
@@ -42,8 +44,8 @@ class INTERPRETER:
                                 return None, OperatorError(f"Unspecified type requirements for binary operator '{root.value}'.\nUnable to complete calculation.", *root.span, source, "UnspecifiedBinaryOperatorTypeRequirementsError")
 
                             for valid_type in operator_valid:
-                                if "left" in operator_tags or issubclass(types[0], valid_type[0]):
-                                    if "right" in operator_tags or issubclass(types[1], valid_type[-1]):
+                                if "left" in operator_tags or isinstance(operands[0], valid_type[0]):
+                                    if "right" in operator_tags or isinstance(operands[1], valid_type[-1]):
                                         break
                             else:
                                 if operator_valid:

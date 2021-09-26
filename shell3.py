@@ -39,19 +39,20 @@ for arg in sys.argv:
         elif param == "src":
             src = value
 
-import_packages(packages)
 
-import expript_lxr as lxr
-import expript_psr as psr
-import expript_int as int
-import expript_ops as ops
-import expript_lib as lib
+packs = import_packages(packages)
+
+lxr = packs['lxr']
+psr = packs['psr']
+int = packs['int']
+ops = packs['ops']
+lib = packs['lib']
 
 lexer = lxr.LEXER()
 parser = psr.PARSER(lexer)
 interpreter = int.INTERPRETER(lexer, parser)
 operators = ops.OPERATORS()
-library = lib.LIBRARY()
+library = lib.LIBRARY(ops)
 
 lexer.operators = operators
 parser.debug = debug

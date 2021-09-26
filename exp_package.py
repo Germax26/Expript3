@@ -8,20 +8,23 @@ def import_packages(packages):
     """
     ok = True
 
+    modules = {}
+
     for package in packages:
-        module_name = f"expript_{package}"
-        package_name = packages[package]
+        package_name = packages[package].split("/")[-1]
         try:
-            spec = importlib.util.spec_from_file_location(module_name, f"{package_name}.{package}.py")
+            spec = importlib.util.spec_from_file_location(f"{package_name}_{package}", f"{package_name}.{package}.py")
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            sys.modules[module_name] = module
+            modules[package] = module
+
         except FileNotFoundError:
             print(f"Package {package_name}.{package} could not be loaded.")
             ok = False
 
     if not ok: sys.exit()
 
+    return modules
 
 def path(name):
     """

@@ -3,11 +3,11 @@ from exp_info import *
 from exp_package import *
 from expript3 import *
 
-import_packages({"ops": path("std")})
+# std_ops = import_packages({"ops": path("std")})["ops"]
 
-import expript_ops as std_ops
+# import expript_ops as std_ops
 
-def exp_function(name, call, types=[]): return std_ops.Function(None, name, call, types)
+def exp_function(operators, name, call, types=[]): return operators.Function(None, name, call, types)
 
 def monad(f):
     def inner(self, _, context):
@@ -31,19 +31,19 @@ Reverse = simple(lambda x: x[::-1])
 Evaluate = monad(Eval)
 
 class LIBRARY:
-    def __init__(self):
+    def __init__(self, operators):
         self.values = {
             "true": True,
             "false": False,
             "()": tuple(),
-            "len": exp_function("Length", Length, [str, tuple, list]),
-            "rev": exp_function("Reverse", Reverse, [str, tuple, list]),
-            "eval": exp_function("Evaluate", Evaluate, [str])
+            "len": exp_function(operators, "Length", Length, [str, tuple, list]),
+            "rev": exp_function(operators, "Reverse", Reverse, [str, tuple, list]),
+            "eval": exp_function(operators, "Evaluate", Evaluate, [str])
         }
         self.variables = {}
 
 std_lib = module(LIBRARY)
 
-info = package_info(std_lib, "std.lib@v1 –– the built-in library package", [exp_error, exp_info, exp_package, std_ops])
+info = package_info(std_lib, "std.lib@v1 –– the built-in library package", [exp_error, exp_info, exp_package])
 
 if __name__ == "__main__": info()
