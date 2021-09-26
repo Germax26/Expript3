@@ -6,6 +6,7 @@ class TOKEN_LIST:
         self.buffer = buffer
         self.is_list = True
         self.full = expr
+        self.token_type = "value"
 
     def __setitem__(self, index, value):
         self.tokens[index] = value
@@ -20,6 +21,9 @@ class TOKEN_LIST:
             else:
                 print("  " * depth + str(token))
 
+    def length(self):
+        return len(self.tokens)
+
     def append(self, token):
         self.tokens.append(token)
 
@@ -29,7 +33,7 @@ class TOKEN_LIST:
         return new_tokens
 
     def pop(self, index):
-        self.tokens.pop(index)
+        return self.tokens.pop(index)
 
 class TOKEN:
     def __init__(self, value, token_type, span_left, span_right):
