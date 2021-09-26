@@ -7,6 +7,9 @@ class TOKEN_LIST:
         self.is_list = True
         self.full = expr
         self.token_type = "value"
+        self.span_left = None
+        self.span_right = None
+        self.span = None, None
 
     def __setitem__(self, index, value):
         self.tokens[index] = value
@@ -26,6 +29,10 @@ class TOKEN_LIST:
 
     def append(self, token):
         self.tokens.append(token)
+        if self.length() == 1:
+            self.span_left = token.span_left - 1
+        self.span_right = token.span_right + token.span_left - self.span_left + 1
+        self.span = self.span_left, self.span_right
 
     def __add__(self, other):
         new_tokens = TOKEN_LIST(self.full + other.full, buffer=self.buffer)
