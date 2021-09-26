@@ -37,7 +37,7 @@ class Category:
         Returns:
             bool: Whether or not the operator is in this category
         """
-        return operator in self.operators
+        return ("uber" in self.tags) or (operator in self.operators)
 
     def __getitem__(self, index):
         return self.operators[index]
