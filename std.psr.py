@@ -17,120 +17,94 @@ class PARSER:
 
     def parse(self, expr, tokens, categories, depth=0):
 
-        nodes = NODE_LIST()
+        def parse_value(tokens):
+            if tokens[0].token_type == "value":
+                return to_node(self, expr, tokens.pop(0), categories, depth)
+            return None, ParserError("parse value error.\nprobably because this token isn't a value.", *tokens[0].span, expr, "help")
 
-        for i, token in enumerate(tokens.tokens):
-            if not token.is_list and token.token_type not in ["value", "operator"]:
-                return None, ParserError(f"Invalid token. Got token type '{token.token_type}'.", token.span_left, token.span_right, expr, "InvalidTokenError")
+        def parse_category(tokens, category_index):
+            category = categories.categories[category_index]
+
+            def parse_lower(drop=1):
+                return parse_category(tokens, category_index - drop) if category_index - drop + 1 else parse_value(tokens)
             
-            if token.is_list:
-                root, err = self.parse(expr, token, categories, depth + 1)
-                if err: return None, err
-                root.in_sub = True
-                nodes.append(root)
-            else:
-                nodes.append(NODE(token.value, token.token_type, *token.span))
-
-        if self.debug:
-            print("Nodes:")
-            nodes.display(depth)
-            print()
-
-        for category in categories.categories:
-            changed = False
             if "unary" in category.tags:
+                if tokens[0].token_type == "operator":
+                    operator, err = to_node(self, expr, tokens.pop(0), categories, depth)
+                    if err: return None, err
 
-                changed = self.apply_unary_category(nodes, category, categories, False, depth)
+                    for potential_category in categories.categories:
+                        if "unary" in potential_category.tags:
+                            if potential_category.contains(operator.value):
+                                break
+                    else:
+                        return None, ParserError(f"Unknown unary operator '{operator.value}'.", *operator.span, expr, "UnknownUnaryOperatorError")
 
+                    if not tokens.length():
+                        return None, ParserError("Expected value after unary operator. Got EOF instead.", len(expr) + 1, 1, expr, "ExpectedValueAfterUnaryOperatorError")
+
+                    right, err = parse_lower(0)
+                    if err: return None, err
+
+                    operator.right = right
+                    operator.node_type = "value"
+                    operator.is_op = True
+
+                    return operator, None
+                else:
+                    return parse_lower()
             else:
-                step = -1 if "reverse-collapse" in category.tags else 1
-                current_ix = nodes.length() - 1 if step == -1 else 0
+                left, err = parse_lower()
+                if err: return None, err
+                
+                series = [left]
 
-                while (0 <= current_ix) and (current_ix < nodes.length()):
-                    if nodes[current_ix].node_type == "operator" and category.contains(nodes[current_ix].value):
-                        nodes[current_ix].left = nodes[current_ix - 1]
-                        nodes[current_ix].right = nodes[current_ix + 1]
-                        nodes[current_ix].node_type = "value"
-                        nodes[current_ix].is_op = True
-                        nodes.pop(current_ix - 1)
-                        nodes.pop(current_ix)
-                        current_ix -= 1
-                        changed = True
+                while tokens.length() and tokens[0].token_type == "operator" and category.contains(tokens[0].value):
+                    operator, err = to_node(self, expr, tokens.pop(0), categories, depth)
+                    if err: return None, err
 
-                    current_ix += step
+                    series.append(operator)
 
-                if self.debug and changed: self.display_nodes(nodes, category.name, True, depth)
-        
-        self.apply_unary_category(nodes, "unary", categories, True, depth)
+                    if not tokens.length():
+                        return None, ParserError("Expected value after binary operator.", operator.span_left + 1, 1, expr, "ExpectedValueAfterBinaryOperatorError")
 
-        len_nodes = nodes.length()
+                    right, err = parse_lower()
+                    if err: return None, err
 
-        while nodes.length() > 2:
-            nodes[1].left = nodes[0]
-            nodes[1].right = nodes[2]
-            nodes[1].node_type = "value"
-            nodes[1].is_op = True
-            
-            nodes.pop(0)
-            nodes.pop(1)
+                    series.append(right)
 
-        if len_nodes != nodes.length(): self.display_nodes(nodes, "binary", False, depth)
+                if len(series) == 1: return series[0], None
 
-        if nodes.length() > 1:
-            return None, ParserError("Paraihs!", nodes[1].left_span(), len(expr) - nodes[1].left_span(), expr, "ParaihNodeError")
-
-        return nodes[0], None
-
-    def display_nodes(self, nodes, name, is_category, depth):
-        if is_category:
-            print(f"{depth*'   '}After category \"{name}\"\n")
-        else:
-            print(f"{depth*'   '}After unknown {name} operators\n")
-        nodes.display(depth)
-        print()
-
-    def apply_unary_category(self, nodes, category, categories, force_contain, depth):
-        changed = False
-
-        current_ix = nodes.length() - 1
-
-        while current_ix + 1:
-            current_type = nodes[current_ix].node_type
-
-            if current_type == "operator":
-                if force_contain or category.contains(nodes[current_ix].value):
-
-                    next_type = "operator"
-                    if current_ix:
-                        next_type = nodes[current_ix - 1].node_type
+                while len(series) > 2:
+                    index = len(series) - 2 if "reverse-collapse" in category.tags else 1
                     
-                    if current_type == next_type:
-                        if nodes[current_ix + 1].node_type == 'operator':
-                            current_ix -= 1
-                            continue
-                        if current_ix + 1 == nodes.length():
-                            return None, ParserError(f"Unexpected EOF '{nodes[current_ix + (plus_one := current_ix + 1 != nodes.length())].value}'.", nodes[current_ix + plus_one].span_left + nodes[current_ix + plus_one].span_right, 1, expr, "UnexpectedEOFError")
+                    series[index].left  = series[index - 1]
+                    series[index].right = series[index + 1]
+                    series[index].node_type = "value"
+                    series[index].is_op = True
 
-                        nodes[current_ix].right = nodes[current_ix + 1]
-                        nodes[current_ix].node_type = "value"
-                        nodes[current_ix].is_op = True
+                    series.pop(index + 1)
+                    series.pop(index - 1)
+                
+                if len(series) > 1:
+                    return None, ParserError("Pariahs!", series[1].left_span(), series[-1].left_span() + series[-1].right_span() - series[1].left_span(), expr, "PariahNodesError")
 
-                        nodes.pop(current_ix + 1)
-
-                        changed = True
-
-            current_ix -= 1
-
-        if changed:
-            if self.debug:
-                self.display_nodes(nodes, category if force_contain else category.name, not force_contain, depth)
-            for prev_category in categories.categories:
-                self.apply_unary_category(nodes, prev_category, categories, False, depth)
+                return series[0], None
     
-        return changed
+        root, err = parse_category(tokens, len(categories.categories) - 1)
+        if err: return None, err
+
+        if tokens.length():
+            if tokens[0].token_type == "value":
+                return None, ParserError("Expected operator. Got value instead.", *tokens[0].span, expr, "ExpectedOperatorError")
+            elif tokens[0].token_type == "operator":
+                return None, ParserError(f"Unknown binary operator '{tokens[0].value}'.", *tokens[0].span, expr, "UnknownBinaryOperatorError")
+            return None, ParserError("Überpariahs!", tokens[0].span_left, len(expr) - tokens[0].span_left, expr, "ÜberparaihNodesError")
+
+        return root, None
 
 std_psr = module(PARSER)
 
-info = package_info(std_psr, "std.psr@v1 –– the standard parser", [exp_node, exp_error, exp_info])
+info = package_info(std_psr, "std.psr@v2 –– the standard parser", [exp_node, exp_error, exp_info])
 
 if __name__ == "__main__": info()
