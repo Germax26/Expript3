@@ -2,11 +2,7 @@ from exp_error import *
 from exp_package import *
 from exp_info import *
 
-import_packages({"lib": path("std")})
-
-import expript_lib as std_lib
-
-std = std_lib.LIBRARY()
+std_lib = import_packages({"lib": path("std")})["lib"]
 
 def Identity(f, _):
     return f, None
@@ -17,7 +13,8 @@ def Mockingbird(f, context):
     return None, InterpreterError("Can't call given input on itself.", *context.right.span, context.expr, "MockingbirdError")
 
 class LIBRARY:
-    def __init__(self):
+    def __init__(self, ops):
+        std = std_lib.LIBRARY(ops) 
         self.values = {**std.values,
             "I": Identity,
             "M": Mockingbird,
