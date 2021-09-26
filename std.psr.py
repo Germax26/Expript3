@@ -20,7 +20,7 @@ class PARSER:
         def parse_value(tokens):
             if tokens[0].token_type == "value":
                 return to_node(self, expr, tokens.pop(0), categories, depth)
-            return None, ParserError("parse value error.\nprobably because this token isn't a value.", *tokens[0].span, expr, "help")
+            return None, ParserError(f"Expected value. Got {tokens[0].token_type} instead.", *tokens[0].span, expr, "ExpectedValueError")
 
         def parse_category(tokens, category_index):
             category = categories.categories[category_index]
