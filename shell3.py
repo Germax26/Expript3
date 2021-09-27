@@ -16,7 +16,8 @@ packages = {
     "psr": std, 
     "int": std, 
     "ops": std, 
-    "lib": std
+    "lib": std,
+    "rpr": std
 }
 
 src = None
@@ -47,12 +48,14 @@ psr = packs['psr']
 int = packs['int']
 ops = packs['ops']
 lib = packs['lib']
+rpr = packs['rpr']
 
 lexer = lxr.LEXER()
 parser = psr.PARSER(lexer)
 interpreter = int.INTERPRETER(lexer, parser)
 operators = ops.OPERATORS()
 library = lib.LIBRARY(ops)
+representer = rpr.REPRESENTER()
 
 lexer.operators = operators
 parser.debug = debug
@@ -73,13 +76,7 @@ def resolve_err(err):
 def resolve(source):
     result, err = evaluate(source, lexer, parser, interpreter, operators, variables, debug)
     if resolve_err(err): return
-    if type(result) == str:
-        print(f"'{result}'")
-    elif type(result) == FunctionType:
-        print(f"<fn {str(result).split(' ')[1]}>")
-    elif type(result) == tuple and len(result) == 1:
-        print(f"({result[0]})")
-    elif printstr := str(result): print(printstr)
+    if print_str := representer.represent(result) : print(print_str)
 
 for variable in library.variables:
     result, err = evaluate(library.variables[variable], lexer, parser, interpreter, operators, variables)
