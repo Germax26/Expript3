@@ -4,7 +4,6 @@ from exp_package import *
 from exp_variable import *
 from exp_info import *
 
-import string
 from types import FunctionType
 
 std_lib = import_packages({"lib": path("std")})["lib"]
@@ -227,6 +226,6 @@ class OPERATORS:
 
 std_ops = module(OPERATORS)
 
-info = package_info(std_ops, "std.ops@v2 –– the standard operators", [exp_category, exp_error, exp_variable, exp_info])
+info = package_info(std_ops, "std.ops@v2 –– the standard operators", [exp_category, exp_error, exp_variable, exp_info, std_lib])
 
 if __name__ == "__main__": info()
