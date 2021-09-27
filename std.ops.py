@@ -1,84 +1,25 @@
 from exp_category import *
 from exp_error import *
+from exp_package import *
 from exp_variable import *
 from exp_info import *
-from exp_type import *
 
 import string
 from types import FunctionType
 
-class Binding:
-    def __init__(self, context):
-        self.name = context.left.value
-        self.context = context
-
-        def get_val():
-            result, err = self.context.evaluate()
-            if err: return None, err
-            if type(result) == Function:
-                return result.copy(self.name), None
-            return result, None
-
-        self.var = VARIABLE(self.name, func=get_val)
-    
-    def __repr__(self): return ""
-
-class Function:
-    def __init__(self, context, name=None, override=None, types=[]):
-        if context:
-            self.param = context.left.value
-        self.context = context
-        self.name = name
-        self.override = override
-        self.types = types
-
-    def __call__(self, _, context):
-        right = {}
-
-        def get_param():
-            # nonlocal right
-            if right: return right["_"]
-            right["_"] = context.evaluate()
-            return get_param()
-
-        if self.types:
-            argument, err = get_param()
-            if err: return None, err
-            argument_type = type(argument)
-            for _type in self.types:
-                if issubclass(argument_type, _type):
-                    break
-            else:
-                return None, InterpreterError(f"Unpermitted type '{stringify(argument_type)}' for {str(self)}. Expected otherwise.", *context.self.uberspan(), context.expr, "UnpermittedTypeError")
-
-        try:
-            if self.override:
-                if right: param = get_param()
-                return self.override(self, param, context)
-
-            return self.context.evaluate(variables=self.context.variables.union(VARIABLE_LIST(VARIABLE(self.param, func=get_param))))
-        except RecursionError:
-            return None, InterpreterError("Too much recursion.", *context.self.uberspan(), context.expr, "ExcessiveRecursionError")
-            
-    def __repr__(self):
-        if self.name:
-            return f"<fn {self.name}>"
-        return f"<fn of {self.param}>"
-
-    def copy(self, new_name=None):
-        return Function(self.context, new_name, self.override, self.types)
+std_lib = import_packages({"lib": path("std")})["lib"]
 
 class Operators:
-    class Unary: # [$]
-        class Positive: # [x]
+    class Unary:
+        class Positive:
             valid = [int, float] 
             def function(right, _):
                 return +right, None
-        class Negative: # [x]
+        class Negative:
             valid = [int, float]
             def function(right, _):
                 return -right, None
-        class Negation: # [x]
+        class Negation:
             valid = [bool]
             def function(right, _):
                 return not right, None
@@ -121,9 +62,9 @@ class Operators:
                 
         class Application:
             tags = ["right"]
-            valid = [[Function], [FunctionType]]
+            valid = [[std_lib.Function], [FunctionType]]
             def function(left, _, context):
-                if context.type_left == Function:
+                if context.type_left == std_lib.Function:
                     return left(None, context)
 
                 right, err = context.evaluate()
@@ -213,7 +154,7 @@ class Operators:
             def function(_, __, context):
                 if context.left.is_op:
                     return None, InterpreterError("An expression cannot be the parameter of a function.", *context.left.uberspan(), context.expr, "ExpressionParameterError")
-                return Function(context), None
+                return std_lib.Function(context), None
 
         class Binding:
             tags = ["left", "right"]
@@ -221,13 +162,13 @@ class Operators:
             def function(_, __, context):
                 if context.left.is_op:
                     return None, InterpreterError("Cannot bind value to expression.", *context.left.uberspan(), context.expr, "CannotAssignToExpressionError")
-                return Binding(context), None
+                return std_lib.Binding(context), None
 
         class Sequention:
             tags = ["right"]
             valid = [[object]]
             def function(left, _, context):
-                if context.type_left == Binding:
+                if context.type_left == std_lib.Binding:
                     return context.evaluate(variables=context.variables.union(VARIABLE_LIST(left.var)))
                 return context.evaluate()
 
@@ -283,16 +224,9 @@ class OPERATORS:
             Category("Sequention –– Sequention operator", "reverse-collapse")
                 .add(";", Operators.Binary.Sequention)
         ]
-        self.alpha = []
-        for category in self.categories:
-            for operator in category.operators:
-                for char in operator:
-                    if char in string.ascii_letters+string.digits + "_":
-                        self.alpha.append(operator)
-                        break
 
 std_ops = module(OPERATORS)
 
-info = package_info(std_ops, "std.ops@v2 –– the standard operators", [exp_category, exp_error, exp_variable, exp_info, exp_type])
+info = package_info(std_ops, "std.ops@v2 –– the standard operators", [exp_category, exp_error, exp_variable, exp_info])
 
 if __name__ == "__main__": info()

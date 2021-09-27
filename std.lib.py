@@ -1,13 +1,72 @@
 from exp_error import *
 from exp_info import *
 from exp_package import *
+from exp_variable import *
 from expript3 import *
 
-# std_ops = import_packages({"ops": path("std")})["ops"]
+class Binding:
+    def __init__(self, context):
+        self.name = context.left.value
+        self.context = context
 
-# import expript_ops as std_ops
+        def get_val():
+            result, err = self.context.evaluate()
+            if err: return None, err
+            if type(result) == Function:
+                return result.copy(self.name), None
+            return result, None
 
-def exp_function(operators, name, call, types=[]): return operators.Function(None, name, call, types)
+        self.var = VARIABLE(self.name, func=get_val)
+    
+    def __repr__(self): return ""
+
+class Function:
+    def __init__(self, context, name=None, override=None, types=[]):
+        if context:
+            self.param = context.left.value
+        self.context = context
+        self.name = name
+        self.override = override
+        self.types = types
+
+    def __call__(self, _, context):
+        right = {}
+
+        def get_param():
+            # nonlocal right
+            if right: return right["_"]
+            right["_"] = context.evaluate()
+            return get_param()
+
+        if self.types:
+            argument, err = get_param()
+            if err: return None, err
+            argument_type = type(argument)
+            for _type in self.types:
+                if issubclass(argument_type, _type):
+                    break
+            else:
+                return None, InterpreterError(f"Unpermitted type '{stringify(argument_type)}' for {str(self)}. Expected otherwise.", *context.self.uberspan(), context.expr, "UnpermittedTypeError")
+
+        try:
+            if self.override:
+                if right: param = get_param()
+                return self.override(self, param, context)
+
+            return self.context.evaluate(variables=self.context.variables.union(VARIABLE_LIST(VARIABLE(self.param, func=get_param))))
+        except RecursionError:
+            return None, InterpreterError("Too much recursion.", *context.self.uberspan(), context.expr, "ExcessiveRecursionError")
+            
+    def __repr__(self):
+        if self.name:
+            return f"<fn {self.name}>"
+        return f"<fn of {self.param}>"
+
+    def copy(self, new_name=None):
+        return Function(self.context, new_name, self.override, self.types)
+
+
+def exp_function(name, call, types=[]): return Function(None, name, call, types)
 
 def monad(f):
     def inner(self, _, context):
@@ -36,9 +95,9 @@ class LIBRARY:
             "true": True,
             "false": False,
             "()": tuple(),
-            "len": exp_function(operators, "Length", Length, [str, tuple, list]),
-            "rev": exp_function(operators, "Reverse", Reverse, [str, tuple, list]),
-            "eval": exp_function(operators, "Evaluate", Evaluate, [str])
+            "len": exp_function("Length", Length, [str, tuple, list]),
+            "rev": exp_function("Reverse", Reverse, [str, tuple, list]),
+            "eval": exp_function("Evaluate", Evaluate, [str])
         }
         self.variables = {}
 
