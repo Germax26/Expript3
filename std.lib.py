@@ -2,6 +2,7 @@ from exp_error import *
 from exp_info import *
 from exp_package import *
 from exp_variable import *
+from exp_type import *
 from expript3 import *
 
 class Binding:
