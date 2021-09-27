@@ -54,7 +54,7 @@ lexer = lxr.LEXER()
 parser = psr.PARSER(lexer)
 interpreter = int.INTERPRETER(lexer, parser)
 operators = ops.OPERATORS()
-library = lib.LIBRARY(ops)
+library = lib.LIBRARY()
 representer = rpr.REPRESENTER()
 
 lexer.operators = operators

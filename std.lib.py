@@ -90,7 +90,7 @@ Reverse = simple(lambda x: x[::-1])
 Evaluate = monad(Eval)
 
 class LIBRARY:
-    def __init__(self, operators):
+    def __init__(self):
         self.values = {
             "true": True,
             "false": False,
