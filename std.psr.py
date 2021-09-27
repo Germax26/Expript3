@@ -59,8 +59,11 @@ class PARSER:
                 
                 series = [left]
 
-                while tokens.length() and tokens[0].token_type == "operator" and category.contains(tokens[0].value):
-                    operator, err = to_node(self, expr, tokens.pop(0), categories, depth)
+                while tokens.length() and ((tokens[0].token_type == "operator" and category.contains(tokens[0].value)) or ("implied" in category.tags and tokens[0].token_type == "value")):
+                    if tokens[0].token_type == "operator":
+                        operator, err = to_node(self, expr, tokens.pop(0), categories, depth)
+                    elif tokens[0].token_type == "value":
+                        operator = NODE(list(category.operators)[0], "operator", tokens[0].span_left, 1)
                     if err: return None, err
 
                     series.append(operator)
