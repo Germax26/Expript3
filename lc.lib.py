@@ -2,7 +2,7 @@ from exp_error import *
 from exp_package import *
 from exp_info import *
 
-std_lib = import_packages({"lib": path("std")})["lib"]
+std_lib = import_package(here("std"), "lib")
 
 def Identity(f, _):
     return f, None
@@ -13,8 +13,8 @@ def Mockingbird(f, context):
     return None, InterpreterError("Can't call given input on itself.", *context.right.span, context.expr, "MockingbirdError")
 
 class LIBRARY:
-    def __init__(self, ops):
-        std = std_lib.LIBRARY(ops) 
+    def __init__(self):
+        std = std_lib.LIBRARY() 
         self.values = {**std.values,
             "I": Identity,
             "M": Mockingbird,
@@ -96,3 +96,5 @@ class LIBRARY:
 lc_lib = module(LIBRARY)
 
 info = package_info(lc_lib, "lc.lib@v1 –– the lambda calculus library", [exp_error, exp_package, exp_info, std_lib])
+
+if __name__ == "__main__": info()

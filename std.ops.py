@@ -6,7 +6,7 @@ from exp_info import *
 
 from types import FunctionType
 
-std_lib = import_packages({"lib": path("std")})["lib"]
+std_lib = import_package(here("std"), "lib")
 
 class Operators:
     class Unary:

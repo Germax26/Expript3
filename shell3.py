@@ -8,8 +8,9 @@ from exp_variable import *
 
 from expript3 import evaluate
 
+packages_init()
 
-std = path("std")
+std = here("std")
 
 packages = {
     "lxr": std, 
@@ -40,21 +41,30 @@ for arg in sys.argv:
         elif param == "src":
             src = value
 
+def get_package(pack):
+    return import_package(packages[pack], pack)
 
-packs = import_packages(packages)
+lxr = get_package('lxr')
+psr = get_package('psr')
+int = get_package('int')
+lib = get_package('lib')
+ops = get_package('ops')
+rpr = get_package('rpr')
 
-lxr = packs['lxr']
-psr = packs['psr']
-int = packs['int']
-ops = packs['ops']
-lib = packs['lib']
-rpr = packs['rpr']
+shell3 = module(__name__)
+
+def get_info():
+    package_info(shell3, "shell3@v1.1 –– the built-in expript3 shell", [exp_package, exp_info, exp_variable, lxr, psr, int, ops, lib, rpr])()
+
+if info:
+    get_info()
+    sys.exit()
 
 lexer = lxr.LEXER()
 parser = psr.PARSER(lexer)
 interpreter = int.INTERPRETER(lexer, parser)
-operators = ops.OPERATORS()
 library = lib.LIBRARY()
+operators = ops.OPERATORS()
 representer = rpr.REPRESENTER()
 
 lexer.operators = operators
@@ -104,15 +114,6 @@ if src:
     except IOError:
         print(f"The source {src} could not be loaded.")
 
-    sys.exit()
-
-shell3 = __import__(__name__)
-
-def get_info():
-    package_info(shell3, "shell3@v1 –– the built-in expript3 shell", [exp_package, exp_info, exp_variable, lxr, psr, int, ops, lib])()
-
-if info:
-    get_info()
     sys.exit()
 
 print("Use '^C' to enter the command palette.")
