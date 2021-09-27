@@ -1,9 +1,6 @@
 from exp_info import *
 
 class REPRESENTER:
-    def __init__(self):
-        pass
-
     def represent(self, result):
         if type(result) == str:
             return f"'{result}'"
