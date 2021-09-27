@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-from types import FunctionType
+import string
 
 from exp_package import *
 from exp_info import *
@@ -59,6 +59,15 @@ representer = rpr.REPRESENTER()
 
 lexer.operators = operators
 parser.debug = debug
+operators.alpha = []
+for category in operators.categories:
+    for operator in category.operators:
+        if type(operator) != str:
+            continue
+        for char in operator:
+            if char in string.ascii_letters+string.digits + "_":
+                operators.alpha.append(operator)
+                break
 
 variables = VARIABLE_LIST()
 
