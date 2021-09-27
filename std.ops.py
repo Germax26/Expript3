@@ -96,44 +96,43 @@ class Operators:
             def function(left, right, context):
                 return (left,) + right, None
 
-        class Special:
-            class Radix:
-                tags = ["right"]
-                valid = [[int], [tuple]]
-                def function(left, _, context):
-                    if context.type_left == int: 
-                        if context.right.value.isdigit():
-                            return eval(f"{left}.{context.right.value}"), None # decimals
-                        return None, InterpreterError("Illegal postradix, expected digits.", *context.right.uberspan(), context.expr, "IllegalPostradixError")
+        class Radix:
+            tags = ["right"]
+            valid = [[int], [tuple]]
+            def function(left, _, context):
+                if context.type_left == int: 
+                    if context.right.value.isdigit():
+                        return eval(f"{left}.{context.right.value}"), None # decimals
+                    return None, InterpreterError("Illegal postradix, expected digits.", *context.right.uberspan(), context.expr, "IllegalPostradixError")
 
-                    right, err = context.evaluate()
-                    if err: return None, err
+                right, err = context.evaluate()
+                if err: return None, err
 
-                    type_right = type(right)
+                type_right = type(right)
 
-                    if (type_right) != int: 
-                        return None, InterpreterError("Illegal index, expected int.", *context.right.uberspan(), context.expr, "IllegalIndexError")
-                    
-                    len_left = len(left)
-                    if right + 1 and right < len_left:
-                        return left[right], None
+                if (type_right) != int: 
+                    return None, InterpreterError("Illegal index, expected int.", *context.right.uberspan(), context.expr, "IllegalIndexError")
+                
+                len_left = len(left)
+                if right + 1 and right < len_left:
+                    return left[right], None
 
-                    return None, InterpreterError(f"Index out of range. List was {len_left} element{'s' if len_left > 1 else ''} long.", *context.self.uberspan(), context.expr, "IndexOutOfRangeError")
-                    
-            class Application:
-                tags = ["right"]
-                valid = [[Function], [FunctionType]]
-                def function(left, _, context):
-                    if context.type_left == Function:
-                        return left(None, context)
+                return None, InterpreterError(f"Index out of range. List was {len_left} element{'s' if len_left > 1 else ''} long.", *context.self.uberspan(), context.expr, "IndexOutOfRangeError")
+                
+        class Application:
+            tags = ["right"]
+            valid = [[Function], [FunctionType]]
+            def function(left, _, context):
+                if context.type_left == Function:
+                    return left(None, context)
 
-                    right, err = context.evaluate()
-                    if err: return None, err
+                right, err = context.evaluate()
+                if err: return None, err
 
-                    try:
-                        return left(right, context)
-                    except RecursionError:
-                        return None, InterpreterError("Too much recursion.", *context.self.span, context.expr, "RecursionError")
+                try:
+                    return left(right, context)
+                except RecursionError:
+                    return None, InterpreterError("Too much recursion.", *context.self.span, context.expr, "RecursionError")
 
         class Mathematics:
             class Arithmetic:
@@ -235,16 +234,16 @@ class Operators:
 class OPERATORS:
     def __init__(self):
         self.categories = [
-            Category("Special –– Radix operator")
-                .add(".", Operators.Binary.Special.Radix),
+            Category("Radix –– Radix operator")
+                .add(".", Operators.Binary.Radix),
             
             Category("Unary –– General unary operators", "unary")
                 .add('+', Operators.Unary.Positive)
                 .add("-", Operators.Unary.Negative)
                 .add("!", Operators.Unary.Negation),
 
-            Category("Special –– Application operator")
-                .add("<-", Operators.Binary.Special.Application),
+            Category("Application –– Application operator")
+                .add("<-", Operators.Binary.Application),
 
             Category("Construct –– List construction operator", "reverse-collapse")
                 .add(":", Operators.Binary.Cons),
