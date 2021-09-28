@@ -53,8 +53,7 @@ rpr = get_package('rpr')
 
 shell3 = module(__name__)
 
-def get_info():
-    package_info(shell3, "shell3@v1.1 –– the built-in expript3 shell", [exp_package, exp_info, exp_variable, lxr, psr, int, ops, lib, rpr])()
+get_info = package_info(shell3, "shell3@v1.1 –– the built-in expript3 shell", [exp_package, exp_info, exp_variable, lxr, psr, int, ops, lib, rpr])
 
 if info:
     get_info()
