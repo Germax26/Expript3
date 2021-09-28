@@ -104,6 +104,6 @@ class LIBRARY:
 
 std_lib = module(LIBRARY)
 
-info = package_info(std_lib, "std.lib@v1 –– the built-in library package", [exp_error, exp_info, exp_package])
+info = package_info(std_lib, "std.lib@v1.1 –– the built-in library package", [exp_error, exp_info, exp_package, exp_variable, exp_type])
 
 if __name__ == "__main__": info()

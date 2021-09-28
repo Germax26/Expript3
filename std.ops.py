@@ -226,6 +226,6 @@ class OPERATORS:
 
 std_ops = module(OPERATORS)
 
-info = package_info(std_ops, "std.ops@v2 –– the standard operators", [exp_category, exp_error, exp_variable, exp_info, std_lib])
+info = package_info(std_ops, "std.ops@v2.1 –– the standard operators", [exp_category, exp_error, exp_category, exp_variable, exp_info, std_lib])
 
 if __name__ == "__main__": info()
