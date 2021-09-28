@@ -1,6 +1,26 @@
 from typing import ClassVar
 from exp_info import *
 
+class CategoryList:
+    def __init__(self, *categories):
+        self.categories = categories
+    
+    def add(self, category):
+        self.categories.append(category)
+
+    def contains(self, category_name):
+        for category in self.categories:
+            if category.name == category_name:
+                return True
+        return False
+
+    def get(self, category_name):
+        for category in self.categories:
+            if category.name == category_name:
+                return category
+        err = EnvironmentError(f"Category {category_name} does not exist.")
+        raise err
+
 class Category:
     """Category, used to store a 'category' of operators, all of which will have the same precedence in parsing. Multiple categories are used for more than one level of precedence."""
     def __init__(self, name, *tags):
