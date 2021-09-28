@@ -13,17 +13,18 @@ def import_package(package_name, package_type):
 
     module_name = package_name.split("/")[-1] + "_" + package_type
 
+    try: modules
+    except NameError: packages_init()
+
     if module_name in modules:
         return modules[module_name]
 
     try:
-
         spec = importlib.util.spec_from_file_location(module_name, f"{package_name}.{package_type}.py")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         modules[module_name] = module
         return module
-
     except FileNotFoundError:
         print(f"Package {package_name}.{package_type} could not be loaded.")
         sys.exit()
