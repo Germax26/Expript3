@@ -1,19 +1,17 @@
 from exp_category import *
 from exp_error import *
+from exp_type import *
 from exp_info import *
 
 class Operators:
     class Unary:
-        class Positive:
-            valid = [int, float] 
+        class Positive(NumOp.R):
             def function(right, _):
                 return +right, None
-        class Negative:
-            valid = [int, float]
+        class Negative(NumOp.R):
             def function(right, _):
                 return -right, None
-        class Negation:
-            valid = [bool]
+        class Negation(BoolOp.R):
             def function(right, _):
                 return not right, None
     class Binary:
@@ -26,74 +24,65 @@ class Operators:
                 return None, InterpreterError("Illegal postradix, expected digits.", *context.right.uberspan(), context.expr, "IllegalPostradixError")
 
         class Mathematics:
-            class Arithmetic:
+            class Arithmetic(NumOp):
                 class Primary:
-                    class Addition:
-                        valid = [[int, int], [float, float], [int, float], [float, int], [str, str], [tuple, tuple]]
+                    class Addition(StrOp + TupOp):
                         def function(left, right, _):
                             return left + right, None
                     class Subtraction:
-                        valid = [[int, int], [float, float], [int, float], [float, int]]
                         def function(left, right, _):
                             return left - right, None
                 class Secondary:
-                    class Multiplication:
-                        valid = [[int, int], [float, float], [int, float], [float, int], [str, int], [tuple, int]]
+                    class Multiplication(Mreq("arr :&: int")):
                         def function(left, right, _):
                             return left * right, None
                     class Division:
-                        valid = [[int, int], [float, float], [int, float], [float, int]]
                         def function(left, right, _):
                             if right == 0:
                                 return None, InterpreterError("Cannot divide by 0.", _.self.span_left, _.self.right.left_span() + _.self.right.right_span() - _.self.span_left, _.expr, "DivisionByZeroError")
                             return left / right, None
-                    class Modulo:
+                    class Modulo(ONI):
                         pass
-                    class Quotient:
+                    class Quotient(ONI):
                         pass
                 class Tertiary:
                     class Exponentiation:
-                        valid = [[int, int], [float, float], [int, float], [float, int]]
                         def function(left, right, _):
                             return left ** right, None
+                    class Root(ONI):
+                        pass
 
-        class Boolean:
+        class Boolean(NumOp):
             class Comparisions:
                 class LessThan:
-                    valid = [[int, int], [float, float], [int, float], [float, int]]
                     def function(left, right, _):
                         return left < right, None
                 class LessThanOrEqualTo:
-                    valid = [[int, int], [float, float], [int, float], [float, int]]
                     def function(left, right, _):
                         return left <= right, None
                 class GreaterThan:
-                    valid = [[int, int], [float, float], [int, float], [float, int]]
                     def function(left, right, _):
                         return left > right, None
                 class GreaterThanOrEqualTo:
-                    valid = [[int, int], [float, float], [int, float], [float, int]]
                     def function(left, right, _):
                         return left >= right, None
-                class EqualTo:
-                    valid = [[object, object]]
+                class EqualTo(ObjOp):
                     def function(left, right, _):
                         return left == right, None
-                class NotEqualTo:
-                    valid = [[object, object]]
+                class NotEqualTo(ObjOp):
                     def function(left, right, _):
                         return left != right, None
             class Bitwise:
-                class And:
+                class And(ONI):
                     pass
-                class Or:
+                class Or(ONI):
                     pass
             class Operators:
-                class And:
+                class And(ONI):
                     pass
-                class Or:
+                class Or(ONI):
                     pass
-    
+
 class OPERATORS(CategoryList):
     def __init__(self):
         self.categories = [
@@ -132,6 +121,6 @@ class OPERATORS(CategoryList):
 
 std_ops = module(OPERATORS)
 
-info = package_info(std_ops, "std.ops@v2.2 –– the standard operators", [exp_category, exp_error, exp_info])
+info = package_info(std_ops, "std.ops@v2.3 –– the standard operators", [exp_category, exp_error, exp_info])
 
 if __name__ == "__main__": info()

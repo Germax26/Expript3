@@ -8,6 +8,7 @@ class Error(EnvironmentError):
         self.name = name
         self.error_scope = "idk_scope"
         self.callbacks = []
+        super().__init__(msg)
     
     def display(self):
         line = 0
@@ -73,11 +74,20 @@ class OperatorError(Error):
         super().__init__(msg, span_left, span_right, expr, name)
         self.error_scope = "operator"
 
+class TypeRequirementError(Error):
+    def __init__(self, type_req):
+        super().__init__(f"Invalid type requirement: '{type_req}'", 0, 0, type_req, "InvalidTypeRequirementError")
+        self.error_scope = "type checker"
+
 def not_implemented(msg, span_left, span_right, expr, error_scope):
     return None, Error(msg, span_left, span_right, expr, "UnimplementedFeatureError").in_scope(error_scope)
 
+class ONI:
+    def function(_, __, context):
+        return None, OperatorError(f"The '{context.self.value}' operator is not implemented yet.", *context.self.span, context.expr, "OperatorNotImplementedError")
+
 exp_error = module(__name__)
 
-info = exp_info.package_info(exp_error, "exp_error@v1 –– the built-in error package", [exp_info])
+info = exp_info.package_info(exp_error, "exp_error@v1.1 –– the built-in error package", [exp_info])
 
 if __name__ == "__main__": info()

@@ -2,6 +2,7 @@ from exp_package import *
 from exp_category import *
 from exp_error import *
 from exp_variable import *
+from exp_type import *
 
 from exp_info import *
 
@@ -12,10 +13,7 @@ _std_ops_ = std_ops.OPERATORS()
 
 class Operators:
     class Binary:
-        class Radix:
-            tags = {"right", bool}
-            valid = [[int], [tuple]]
-
+        class Radix(Mreq("int and not bool or arr"), L):
             def function(left, _, context):
                 if isinstance(left, int):
                     return std_ops.Operators.Binary.Radix.function(left, _, context)
@@ -34,9 +32,7 @@ class Operators:
 
                 return None, InterpreterError(f"Index out of range. List was {len_left} element{'s' if len_left != 1 else ''} long.", *context.self.uberspan(), context.expr, "IndexOutOfRangeError")
 
-        class Application:
-            tags = {"right"}
-            valid = [[ext_lib.Function], [FunctionType]]
+        class Application(Mreq("func or Func", {"Func": ext_lib.Function}), L):
             def function(left, _, context):
                 if context.type_left == ext_lib.Function:
                     return left(None, context)
@@ -48,31 +44,24 @@ class Operators:
                     return left(right, context)
                 except RecursionError:
                     return None, InterpreterError("Too much recursion.", *context.self.span, context.expr, "RecursionError")
-        class Cons:
-            valid = [[object, tuple]]
+        
+        class Cons(Mreq("obj :&: tup")):
             def function(left, right, context):
                 return (left,) + right, None
 
-
-        class Lambda:
-            tags = {"left", "right"}
-            valid = []
+        class Lambda(NoneOp):
             def function(_, __, context):
                 if context.left.is_op:
                     return None, InterpreterError("An expression cannot be the parameter of a function.", *context.left.uberspan(), context.expr, "ExpressionParameterError")
                 return ext_lib.Function(context), None
 
-        class Binding:
-            tags = {"left", "right"}
-            valid = []
+        class Binding(NoneOp):
             def function(_, __, context):
                 if context.left.is_op:
                     return None, InterpreterError("Cannot bind value to expression.", *context.left.uberspan(), context.expr, "CannotAssignToExpressionError")
                 return ext_lib.Binding(context), None
 
-        class Sequention:
-            tags = ["right"]
-            valid = [[object]]
+        class Sequention(ObjOp.L):
             def function(left, _, context):
                 if context.type_left == ext_lib.Binding:
                     return context.evaluate(variables=context.variables.union(VARIABLE_LIST(left.var)))
@@ -113,6 +102,6 @@ class OPERATORS(CategoryList):
 
 ext_ops = module(OPERATORS)
 
-info = package_info(ext_ops, "ext.ops@v1 –– the extended operators", [exp_package, exp_category, exp_error, exp_variable, exp_info, std_ops])
+info = package_info(ext_ops, "ext.ops@v1.1 –– the extended operators", [exp_package, exp_category, exp_error, exp_variable, exp_info, std_ops])
 
 if __name__ == "__main__": info()

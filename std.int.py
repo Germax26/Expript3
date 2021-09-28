@@ -26,7 +26,7 @@ class INTERPRETER:
                             try:
                                 operator_tags = operator.tags
                             except AttributeError:
-                                operator_tags = []
+                                operator_tags = {}
 
                             if "left" not in operator_tags:
                                 operands[0], err = self.interpret(source, root.left, categories, variables, depth+1)
@@ -43,14 +43,12 @@ class INTERPRETER:
                             except AttributeError:
                                 return None, OperatorError(f"Unspecified type requirements for binary operator '{root.value}'.\nUnable to complete calculation.", *root.span, source, "UnspecifiedBinaryOperatorTypeRequirementsError")
 
-                            for valid_type in operator_valid:
-                                if "left" in operator_tags or isinstance(operands[0], valid_type[0]):
-                                    if "right" in operator_tags or isinstance(operands[1], valid_type[-1]):
-                                        break
-                            else:
-                                if operator_valid:
+                            try:
+                                if not operator_valid.check(operands):
                                     return None, InterpreterError(f"Invalid types for operator '{root.value}'.\nGot types {stringify(operands[0])}, {stringify(operands[1])}. Expected otherwise.", *root.uberspan(), source, "InvalidTypesError")
-
+                            except Error as err:
+                                return None, err
+                                
                             context = Context(self, root, operands, variables, source, categories)
                             try:
                                 return operator.function(*operands, context)
@@ -73,19 +71,13 @@ class INTERPRETER:
                             right, err = self.interpret(source, root.right, categories, variables, depth+1)
                             if err: return None, err
 
-                            type_right = type(right)
-
                             try:
                                 operator_valid = operator.valid
                             except AttributeError:
                                 return None, OperatorError(f"Unspecified type requirements for unary operator '{root.value}'.\nUnable to complete calculation.", *root.span, source, "UnspecifiedUnaryOperatorTypeRequirementsError")
-
-                            for valid_type in operator_valid:
-                                if issubclass(type_right, valid_type):
-                                    break
-                            else:
-                                if operator_valid:
-                                    return None, InterpreterError(f"Invalid type for the '{root.value}' operator.\nGot type {stringify(right)}. Expected otherwise.",root.span_left, root.right_span(), source, "InvalidTypeError")
+                            
+                            if not operator_valid.check([None, right]):
+                                return None, InterpreterError(f"Invalid type for the '{root.value}' operator.\nGot type {stringify(right)}. Expected otherwise.",root.span_left, root.right_span(), source, "InvalidTypeError")
                             
                         context = Context(self, root, [None, right], variables, source, categories)
                         try:
@@ -111,6 +103,6 @@ class INTERPRETER:
 
 std_int = module(INTERPRETER)
 
-info = package_info(std_int, "std.int@v1 –– the standard interpreter", [exp_error, exp_context, exp_variable, exp_info])
+info = package_info(std_int, "std.int@v1.1 –– the standard interpreter", [exp_error, exp_context, exp_variable, exp_info])
 
 if __name__ == "__main__": info()
