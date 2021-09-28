@@ -52,7 +52,7 @@ def package_info(mod: ModuleType, msg: str, dependencies: DependencyList) -> Fun
         else:
             print(msg)
         for dependency in dependencies:
-            if dependency == exp_info: continue # comment this line to show the exp_info package in all dependency lists
+            if dependency == exp_info and len(dependencies) == 1: continue # comment this line to show the exp_info package in all dependency lists
             try:
                 if dependency.info.__module__ != dependency.__name__:
                     unknown(depth, dependency.__name__, dependency.__file__)
