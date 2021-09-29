@@ -33,7 +33,7 @@ class Operators:
                         def function(left, right, _):
                             return left - right, None
                 class Secondary:
-                    class Multiplication(Mreq("arr :&: int")):
+                    class Multiplication(ArrOp.L * IntOp.R):
                         def function(left, right, _):
                             return left * right, None
                     class Division:

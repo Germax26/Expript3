@@ -1,12 +1,9 @@
-from exp_error import *
-from exp_context import *
-from exp_variable import *
-from exp_info import *
 from exp_package import *
-
-# std_ops = import_packages({"ops": path("std")})["ops"]
-
-def stringify(x): return str(type(x))[8:-2].split('.')[-1]
+from exp_context import *
+from exp_error import *
+from exp_variable import *
+from exp_type import *
+from exp_info import *
 
 class INTERPRETER:
     def __init__(self, lexer, parser):
@@ -35,8 +32,6 @@ class INTERPRETER:
                             if "right" not in operator_tags:
                                 operands[1], err = self.interpret(source, root.right, categories, variables, depth+1)
                                 if err: return None, err
-
-                            types = [type(operand) for operand in operands]
 
                             try:
                                 operator_valid = operator.valid

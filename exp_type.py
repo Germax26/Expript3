@@ -15,19 +15,18 @@ def stringify(klass, force_type=False):
     return str(x)[8:-2].split('.')[-1]
 
 class TypeRequirement:
-    def __init__(self, req_type, value, left=False, right=False, extra={}):
-        self.value = value
+    def __init__(self, req_type, value, left=False, right=False):
         self.req_type = req_type
+        self.value = value
         self.left = left
         self.right = right
-        self.extra = extra
 
     def __repr__(self):
         return f"[{self.req_type} {self.value} {int(self.left) if type(self.left) == bool else self.left} {int(self.right) if type(self.right) == bool else self.right}]"
 
-    def string(self):
-        if self.req_type == "id":
-            return ":" * self.right + self.value + ":" * self.left
+    def string(self, depth=0):
+        if self.req_type == "type":
+            return "(" + ":" * self.right + ", ".join([stringify(type_) for type_ in self.value]) + ":" * self.left + ")"
         elif self.req_type in Or:
             return self.left.string() + " + " + self.right.string()
         elif self.req_type in And:
@@ -36,164 +35,38 @@ class TypeRequirement:
             return  (f"({left})" if self.left.req_type in And else left) + " * " + (f"({right})" if self.right.req_type in And else right)
         elif self.req_type in Not:
             right = self.right.string()
-            return "!" + f"({right})" if self.right.req_type != "id" and self.right.req_type not in Not else right
+            return "!" + f"({right})" if self.right.req_type != "type" and self.right.req_type not in Not else right
 
-    def __add__(self, other): return TypeRequirement("+", "", self, other, {**self.extra, **other.extra})
-    def __mul__(self, other): return TypeRequirement("*", "", self, other, {**self.extra, **other.extra})
+    def __add__(self, other): return TypeRequirement("|", "", self, other)
+    def __mul__(self, other): return TypeRequirement("&", "", self, other)
     def __neg__(self): return TypeRequirement("!", "", None, self)
 
-    def check(self, types):
-        if self.req_type == "id":
-            try:
-                allowed_types = {
-                    "int": int,
-                    "float": float,
-                    "num": [float, int],
-                    "obj": object,
-                    "tup": tuple,
-                    "str": str,
-                    "bool": bool,
-                    "func": FunctionType,
-                    "none": NoneType,
-                    "arr": [str, list, tuple],
-                    **self.extra
-                }[self.value]
-            except KeyError:
-                raise TypeRequirementError(self.value)
-
-            def check_type(a):
-                for _type in allowed_types if type(allowed_types) == list else [allowed_types]:
-                    if isinstance(a, _type):
+    def check(self, operands):
+        if self.req_type == "type":
+            def check_type(operand):
+                for potential_type in self.value:
+                    if isinstance(operand, potential_type):
                         return True
                 return False
 
-            for_left = check_type(types[0])
-            for_right = check_type(types[1])
+            left = check_type(operands[0])
+            right = check_type(operands[1])
 
             if self.left or self.right:
-                return (not self.left or for_left) and (not self.right or for_right)
-            return for_left or for_right
+                return (not self.left or left) and (not self.right or right)
+            return left or right
 
-        if self.req_type in And:
-            return self.left.check(types) and self.right.check(types)
-        elif self.req_type in Or:
-            return self.left.check(types) or self.right.check(types)
-        elif self.req_type in Not:
-            return not self.right.check(types)
-        else:
-            print("no", self.value, self.req_type)
+        if self.left: left = self.left.check(operands)
+        if self.right: right = self.right.check(operands)
 
-def req(type_req, extra={}):
-    err = TypeRequirementError(type_req)
-    key = "(:)"
-    is_at_end = False
-    current_ix = -1
-    current_char = None
+        if self.req_type in And: return left and right
+        if self.req_type in Or: return left or right
+        if self.req_type in Not: return not right
 
-    tokens = []
+        raise TypeRequirementError(f"Invalid type requirement '{self.value}'.")
 
-    def advance():
-        nonlocal is_at_end, current_ix, current_char
-        current_ix += 1
-        is_at_end = current_ix >= len(type_req)
-        current_char = type_req[current_ix] if not is_at_end else None
-
-    advance()
-    
-    def next():
-        return tokens.pop(0)
-
-    def check(tt, val=None):
-        return bool(tokens) and (tokens[0][0] == tt and (not val or tokens[0][1] in val))
-
-    def take(tt):
-        if check(tt): return next()
-        raise err
-
-    while not is_at_end:
-        if current_char == " ": 
-            advance()
-        elif current_char in key: 
-            tokens.append(({
-                "(": "lp",
-                ")": "rp",
-                ":": "cl"
-                }[current_char], current_char))
-            advance()
-        elif current_char in And + Or + Not:
-            tokens.append(("id", current_char))
-            advance()
-        else:
-            current = ""
-            while not is_at_end and current_char not in key + " ":
-                current += current_char
-                advance()
-            tokens.append(("id", current))
-            
-    def parse_req(tokens):
-        if check("lp"):
-            next()
-            sub_expr = parse_expr(tokens)
-            take("rp")
-            return sub_expr
-
-        if has_right:= check("cl"): next()
-        id = take("id")
-        if has_left:= check("cl"): next()
-
-        return TypeRequirement(*id, has_left, has_right, extra) 
-
-    def parse_not(tokens):
-        if check("id", Not):
-            op = next()  
-            return TypeRequirement(op[1], "", None, parse_not(tokens))
-        return parse_req(tokens)
-
-    def parse(lower, *names):
-        if len(names) > 1:
-            return parse(parse(lower, *names[:-1]), names[-1])
-        names = names[0]
-        def do_parse(tokens):
-            left = lower(tokens)
-            while tokens and check("id", names):
-                op = next()
-                right = lower(tokens)
-                left = TypeRequirement(op[1], "", left, right)
-            
-            return left
-        return do_parse
-        
-    parse_expr = parse(parse_not, And, Or)
-
-    result = parse_expr(tokens)
-    if tokens: 
-        print("pariahs!", tokens)
-        sys.exit()
-        raise err
-    return result
-
-def sides(type_req): return TypeRequirement("id", type_req, 1, 0), TypeRequirement("id", type_req, 0, 1)
-
-req_numl, req_numr = sides("num")
-req_num = req_numl * req_numr
-
-req_strl, req_strr = sides("str")
-req_str = req_strl * req_strr
-
-req_tupl, req_tupr = sides("tup")
-req_str = req_tupl * req_tupr
-
-req_arrl, req_arrr = sides("arr")
-req_arr = req_arrl * req_arrr
-
-req_booll, req_boolr = sides("bool")
-req_bool = req_booll * req_boolr
-
-req_nonel, req_noner = sides("none")
-req_none = req_nonel * req_noner
-
-req_objl, req_objr = sides("obj")
-req_obj = req_objl * req_objr
+def req(types, sides=0):
+    return TypeRequirement("type", types if isinstance(types, list) else [types], sides//2, sides%2)
 
 class L: tags = {"right"}
 class R: tags = {"left"}
@@ -205,9 +78,9 @@ def init_sub(lr):
         for a in cls.__dict__.keys():
             if isinstance(cls.__dict__[a], type):
                 init_cls(cls.__dict__[a])
-            if a == "function":
+            elif a == "function":
                 should_add = should_add is None
-            if a == "valid":
+            elif a == "valid":
                 should_add = False
         if should_add:
             setattr(cls, "valid", lr)
@@ -225,25 +98,27 @@ def M(type_req, *_):
 
 def Mreq(*_): return M(req(*_))
 
-def Req(_req, _l=None, _r=None, bases=()):
-    name = _req.capitalize() + "Op"
-    l = _l or req(_req + ":")
-    r = _r or req(":" + _req)
+def generate(types, bases=()):
+    types = types if isinstance(types, list) else [types]
+    l = req(types, 2)
+    r = req(types, 1)
     lr = l * r
-    return MetaReq(name, bases, {
-        "L": MetaReq(name + ".L", (L,), {"valid": l}),
-        "R": MetaReq(name + ".R", (R,), {"valid": r}),
-        "valid": lr,
-        "__init_subclass__": init_sub(lr)
+    name = "(" * (len(types) != 1) + ", ".join([stringify(type_) for type_ in types]) + ")" * (len(types) != 1)
+    return l, r, lr, MetaReq(name, bases, {
+        "L": MetaReq(name + ".L", (L,), {"valid": l, "__init_subclass__": init_sub(l)}),
+        "R": MetaReq(name + ".R", (R,), {"valid": r, "__init_subclass__": init_sub(r)}),
+        "valid": lr, "__init_subclass__": init_sub(lr)
     })
 
-NumOp = Req("num", req_numl, req_numr)
-StrOp = Req("str", req_strl, req_strr)
-TupOp = Req("tup", req_tupl, req_tupr)
-ArrOp = Req("arr", req_arrl, req_arrr)
-BoolOp = Req("bool", req_booll, req_boolr)
-NoneOp = Req("none", req_nonel, req_noner, (N,))
-ObjOp = Req("obj", req_objl, req_objr)
+req_numl, req_numr, req_num, NumOp = generate([int, float])
+req_intl, req_intr, req_int, IntOp = generate(int)
+req_strl, req_strr, req_str, StrOp = generate(str)
+req_tupl, req_tupr, req_tup, TupOp = generate(tuple)
+req_arrl, req_arrr, req_arr, ArrOp = generate([str, list, tuple])
+req_booll, req_boolr, req_bool, BoolOp = generate(bool)
+req_nonel, req_noner, req_none, NoneOp = generate(type(None), (N,))
+req_funcl, req_funcr, req_func, FuncOp = generate(FunctionType)
+req_objl, req_objr, req_obj, ObjOp = generate(object)
 
 exp_type = module(TypeRequirement)
 

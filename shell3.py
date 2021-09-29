@@ -3,8 +3,9 @@
 import string
 
 from exp_package import *
-from exp_info import *
+from exp_error import *
 from exp_variable import *
+from exp_info import *
 
 from expript3 import evaluate
 
@@ -44,12 +45,16 @@ for arg in sys.argv:
 def get_package(pack):
     return import_package(packages[pack], pack)
 
-lxr = get_package('lxr')
-psr = get_package('psr')
-int = get_package('int')
-lib = get_package('lib')
-ops = get_package('ops')
-rpr = get_package('rpr')
+try:
+    lxr = get_package('lxr')
+    psr = get_package('psr')
+    int = get_package('int')
+    lib = get_package('lib')
+    ops = get_package('ops')
+    rpr = get_package('rpr')
+except Error as err:
+    err.display()
+    sys.exit()
 
 shell3 = module(__name__)
 

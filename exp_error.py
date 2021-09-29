@@ -75,8 +75,8 @@ class OperatorError(Error):
         self.error_scope = "operator"
 
 class TypeRequirementError(Error):
-    def __init__(self, type_req):
-        super().__init__(f"Invalid type requirement: '{type_req}'", 0, 0, type_req, "InvalidTypeRequirementError")
+    def __init__(self, msg):
+        super().__init__(msg, 0, 0, "", "InvalidTypeRequirementError")
         self.error_scope = "type checker"
 
 def not_implemented(msg, span_left, span_right, expr, error_scope):
@@ -88,6 +88,6 @@ class ONI:
 
 exp_error = module(__name__)
 
-info = exp_info.package_info(exp_error, "exp_error@v1.1 –– the built-in error package", [exp_info])
+info = package_info(exp_error, "exp_error@v1.1 –– the built-in error package", [exp_info])
 
 if __name__ == "__main__": info()

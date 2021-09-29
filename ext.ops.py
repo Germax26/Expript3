@@ -13,7 +13,7 @@ _std_ops_ = std_ops.OPERATORS()
 
 class Operators:
     class Binary:
-        class Radix(Mreq("int and not bool or arr"), L):
+        class Radix(IntOp.L * -BoolOp.L + ArrOp.L, L):
             def function(left, _, context):
                 if isinstance(left, int):
                     return std_ops.Operators.Binary.Radix.function(left, _, context)
@@ -32,7 +32,7 @@ class Operators:
 
                 return None, InterpreterError(f"Index out of range. List was {len_left} element{'s' if len_left != 1 else ''} long.", *context.self.uberspan(), context.expr, "IndexOutOfRangeError")
 
-        class Application(Mreq("func or Func", {"Func": ext_lib.Function}), L):
+        class Application(Mreq(ext_lib.Function) + FuncOp.L, L):
             def function(left, _, context):
                 if context.type_left == ext_lib.Function:
                     return left(None, context)
@@ -45,7 +45,7 @@ class Operators:
                 except RecursionError:
                     return None, InterpreterError("Too much recursion.", *context.self.span, context.expr, "RecursionError")
         
-        class Cons(Mreq("obj :&: tup")):
+        class Cons(ObjOp.L * TupOp.R):
             def function(left, right, context):
                 return (left,) + right, None
 
