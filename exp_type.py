@@ -98,7 +98,7 @@ def M(type_req, *_):
 
 def Mreq(*_): return M(req(*_))
 
-def generate(types, bases=()):
+def generate_req(types, bases=()):
     types = types if isinstance(types, list) else [types]
     l = req(types, 2)
     r = req(types, 1)
@@ -110,15 +110,15 @@ def generate(types, bases=()):
         "valid": lr, "__init_subclass__": init_sub(lr)
     })
 
-req_numl, req_numr, req_num, NumOp = generate([int, float])
-req_intl, req_intr, req_int, IntOp = generate(int)
-req_strl, req_strr, req_str, StrOp = generate(str)
-req_tupl, req_tupr, req_tup, TupOp = generate(tuple)
-req_arrl, req_arrr, req_arr, ArrOp = generate([str, list, tuple])
-req_booll, req_boolr, req_bool, BoolOp = generate(bool)
-req_nonel, req_noner, req_none, NoneOp = generate(type(None), (N,))
-req_funcl, req_funcr, req_func, FuncOp = generate(FunctionType)
-req_objl, req_objr, req_obj, ObjOp = generate(object)
+req_numl, req_numr, req_num, NumOp = generate_req([int, float])
+req_intl, req_intr, req_int, IntOp = generate_req(int)
+req_strl, req_strr, req_str, StrOp = generate_req(str)
+req_tupl, req_tupr, req_tup, TupOp = generate_req(tuple)
+req_arrl, req_arrr, req_arr, ArrOp = generate_req([str, list, tuple])
+req_booll, req_boolr, req_bool, BoolOp = generate_req(bool)
+req_nonel, req_noner, req_none, NoneOp = generate_req(type(None), (N,))
+req_funcl, req_funcr, req_func, FuncOp = generate_req(FunctionType)
+req_objl, req_objr, req_obj, ObjOp = generate_req(object)
 
 exp_type = module(TypeRequirement)
 
