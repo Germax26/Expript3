@@ -6,9 +6,10 @@ from exp_type import *
 from exp_info import *
 
 class INTERPRETER:
-    def __init__(self, lexer, parser):
+    def __init__(self, lexer, parser, literals):
         self.lexer = lexer
         self.parser = parser
+        self.literals = literals
 
     def interpret(self, source, root, categories, variables=VARIABLE_LIST(), depth=0):
         if root.is_op:
@@ -51,6 +52,8 @@ class INTERPRETER:
                                 if str(err)[-27:] == "has no attribute 'function'":
                                     return None, OperatorError(f"Unspecified function for binary operator '{root.value}'.\nUnable to complete calculation.", *root.span, source, "UnspecifiedBinaryOperatorFunctionError")
                                 raise err
+                            except RecursionError:
+                                return None, OperatorError("Too much recursion!", *root.span, source, "RecursionError")
                         return None, OperatorError(f"Missing left operand for binary operator '{root.value}'", *root.span, source, "MissingLeftOperandForBinaryOperatorError")
                     elif not root.left:
                         operator = category[root.value]
@@ -81,19 +84,13 @@ class INTERPRETER:
                             if str(err)[-27:] == "has no attribute 'function'":
                                 return None, OperatorError(f"Unspecified function for unary operator '{root.value}'.\nUnable to complete calculation.", *root.span, source, "UnspecifiedUnaryOperatorFunctionError")
                             raise err
+                        
             else:
                 return None, InterpreterError(f"Unknown operator '{root.value}'", *root.span, source, "UnknownOperaterError")
         else:
-            if root.value in variables:
-                return variables[root.value]()
-            
-            if root.value.isnumeric():
-                if root.value.count('0') == len(root.value): return 0, None
-                return eval(root.value.lstrip("0")), None
-
-            if root.value[0] + root.value[-1] == '""':
-                return root.value[1:-1], None
-
+            for literal in self.literals.literals:
+                if literal[0](root, variables):
+                    return literal[1](root, variables)
             return None, InterpreterError(f"Undefined variable '{root.value}'.", *root.span, source, "UndefinedVariableError")
 
 std_int = module(INTERPRETER)

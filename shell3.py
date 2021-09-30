@@ -16,6 +16,7 @@ std = here("std")
 packages = {
     "lxr": std, 
     "psr": std, 
+    "lit": std,
     "int": std, 
     "ops": std, 
     "lib": std,
@@ -48,6 +49,7 @@ def get_package(pack):
 try:
     lxr = get_package('lxr')
     psr = get_package('psr')
+    lit = get_package('lit')
     int = get_package('int')
     lib = get_package('lib')
     ops = get_package('ops')
@@ -66,7 +68,8 @@ if info:
 
 lexer = lxr.LEXER()
 parser = psr.PARSER(lexer)
-interpreter = int.INTERPRETER(lexer, parser)
+literals = lit.LITERALS()
+interpreter = int.INTERPRETER(lexer, parser, literals)
 library = lib.LIBRARY()
 operators = ops.OPERATORS()
 representer = rpr.REPRESENTER()
@@ -93,6 +96,7 @@ def resolve_err(err):
         try:
             err.display()
         except AttributeError:
+            print(type(err))
             print("Internal error:", err)
     return err
 
