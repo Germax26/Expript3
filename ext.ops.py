@@ -34,8 +34,15 @@ class Operators:
 
         class Application(Mreq(ext_lib.Function) + FuncOp.L, L):
             def function(left, _, context):
-                if context.type_left == ext_lib.Function:
-                    return left(None, context)
+                if isinstance(left, ext_lib.Function):
+                    argument = None
+                    if left.type_req:
+                        argument, err = context.evaluate()
+                        if err: return None, err
+                        if not left.type_req.check([argument, None]):
+                            return None, InterpreterError(f"Unpermitted type '{stringify(type(argument))}' for {str(left)}. Expected otherwise.", *context.right.uberspan(), context.expr, "UnpermittedTypeError")
+                        
+                    return left(argument, context)
 
                 right, err = context.evaluate()
                 if err: return None, err

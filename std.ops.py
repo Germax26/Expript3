@@ -15,9 +15,7 @@ class Operators:
             def function(right, _):
                 return not right, None
     class Binary:
-        class Radix:
-            tags = ["right", bool]
-            valid = [[int]]
+        class Radix(IntOp.L * -BoolOp.L, L):
             def function(left, _, context):
                 if context.right.value.isdigit():
                     return eval(f"{left}.{context.right.value}"), None # decimals

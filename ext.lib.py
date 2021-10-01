@@ -25,38 +25,38 @@ class Binding:
     def __repr__(self): return ""
 
 class Function:
-    def __init__(self, context, name=None, override=None, types=[]):
+    def __init__(self, context, name=None, param=None, override=None, type_req=None):
         if context:
             self.param = context.left.value
+        else:
+            self.param = param
         self.context = context
         self.name = name
         self.override = override
-        self.types = types
+        self.type_req = type_req
 
-    def __call__(self, _, context):
-        right = {}
+    def __call__(self, right, context):
+        arg = None
 
         def get_param():
-            # nonlocal right
-            if right: return right["_"]
-            right["_"] = context.evaluate()
-            return get_param()
-
-        if self.types:
-            argument, err = get_param()
+            nonlocal arg
+            if right is not None: return right, None
+            if arg is not None: return arg, None
+            arg, err = context.evaluate()
             if err: return None, err
-            argument_type = type(argument)
-            for _type in self.types:
-                if issubclass(argument_type, _type):
-                    break
-            else:
-                return None, InterpreterError(f"Unpermitted type '{stringify(argument_type)}' for {str(self)}. Expected otherwise.", *context.self.uberspan(), context.expr, "UnpermittedTypeError")
+            return arg, None
+
+        # if self.type_req:
+        #     argument, err = get_param()
+        #     if err: return None, err
+        #     if not self.type_req.check([argument, None]):
+        #         return None, InterpreterError(f"Unpermitted type '{stringify(type(argument))}' for {str(self)}. Expected otherwise.", *context.right.uberspan(), context.expr, "UnpermittedTypeError")
 
         try:
             if self.override:
-                if right: param = get_param()
-                return self.override(self, param, context)
-
+                param, err = get_param()
+                if err: return None, err
+                return self.override(param, context)
             return self.context.evaluate(variables=self.context.variables.union(VARIABLE_LIST(VARIABLE(self.param, func=get_param))))
         except RecursionError:
             return None, InterpreterError("Too much recursion.", *context.self.uberspan(), context.expr, "ExcessiveRecursionError")
@@ -64,24 +64,26 @@ class Function:
     def __repr__(self):
         if self.name:
             return f"<fn {self.name}>"
-        return f"<fn of {self.param}>"
+        if self.param:
+            return f"<fn of {self.param}>"
+        if self.override:
+            return f"<fn {self.override.__name__}>"
+        return f"<fn {self}>"
 
     def copy(self, new_name=None):
-        return Function(self.context, new_name, self.override, self.types)
+        return Function(self.context, new_name, self.override, self.type_req)
 
+req_expfuncl, req_expfuncr, req_expfunc, ExpFuncOp = generate_req([Function, FunctionType])
 
-def exp_function(name, call, types=[]): return Function(None, name, call, types)
+def exp_function(call, name=None, param=None, type_req=None): return Function(None, name or call.__name__ if param is None else None, param, call, type_req)
 
-def monad(f):
-    def inner(self, _, context):
-        argument, err = _ if _ else context.evaluate()
-        if err: return None, err
-        return f(argument, context)
-    return inner
+def Length(x, _):
+    return len(x), None
 
-simple = lambda f: monad(lambda x, _: (f(x), None))
+def Reverse(x, _):
+    return x[::-1], None
 
-def Eval(source, context):
+def Evaluate(source, context):
     try:
         result, err = evaluate(source, context.int.lexer, context.int.parser, context.int, context.categories, context.variables)
         if err: return None, err.add_callback("in string")
@@ -89,22 +91,18 @@ def Eval(source, context):
     except RecursionError:
         return None, InterpreterError("String evaluation is too recursive!", *context.self.uberspan(), context.expr, "ExcessiveRecursionInStringEvaluationError").add_callback("in string")
 
-Length = simple(len)
-Reverse = simple(lambda x: x[::-1])
-Evaluate = monad(Eval)
-
 class LIBRARY():
     def __init__(self):
         self.values = {**_std_lib_.values,
             "()": tuple(),
-            "len": exp_function("Length", Length, [str, tuple, list]),
-            "rev": exp_function("Reverse", Reverse, [str, tuple, list]),
-            "eval": exp_function("Evaluate", Evaluate, [str])
+            "len": exp_function(Length, type_req=req_arrl),
+            "rev": exp_function(Reverse, type_req=req_arrl),
+            "eval": exp_function(Evaluate, type_req=req_strl)
         }
         self.variables = {}
 
 ext_lib = module(LIBRARY)
 
-info = package_info(ext_lib, "ext.lib@v1 –– the extended library", [exp_package, exp_error, exp_variable, exp_type, exp_info, std_lib])
+info = package_info(ext_lib, "ext.lib@v1.1 –– the extended library", [exp_package, exp_error, exp_variable, exp_type, exp_info, std_lib])
 
 if __name__ == "__main__": info()
