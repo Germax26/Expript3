@@ -6,6 +6,7 @@ class Context:
         self.self = root
         self.left = root.left
         self.right = root.right
+        self.operands = operands
         self.type_left = type(operands[0])
         self.type_right = type(operands[1])
         self.variables = variables
@@ -25,6 +26,12 @@ class Context:
             tuple: (result, None) or (None, err)
         """
         return self.int.interpret(source or self.expr, root or self.right, categories or self.categories, variables or self.variables)
+
+    def copy(self, int=None, root=None, operands=None, variables=None, source=None, categories=None):
+        new_context = Context(int or self.int, root or self.self, operands or self.operands, variables or self.variables, source or self.expr, categories or self.categories)
+        if root is None and self.left is not self.self.left: new_context.left = self.left
+        if root is None and self.right is not self.self.right: new_context.right = self.right
+        return new_context
 
 exp_context = module(__name__)
 
