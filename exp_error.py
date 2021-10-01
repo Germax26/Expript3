@@ -14,7 +14,6 @@ class Error(EnvironmentError):
         line = 0
         mod = 0
         total = 0
-        
         lines = self.expr.split("\n")
         for i, j in enumerate(lines):
             if self.span_left < total:
@@ -35,9 +34,7 @@ class Error(EnvironmentError):
             if callback[2] > 1:
                 print(f"  [previous line repeated {callback[2]-1} more times]")
         print(self.msg)
-
         print(self.expr)
-
         print(" " * self.span_left + "^" * self.span_right)
 
         if self.span_right > len(self.expr) - self.span_left:
@@ -55,23 +52,23 @@ class Error(EnvironmentError):
         return self
 
 class LexerError(Error):
-    def __init__(self, msg, span_left, span_right, expr, name):
-        super().__init__(msg, span_left, span_right, expr, name)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.error_scope = "lexer"
 
 class ParserError(Error):
-    def __init__(self, msg, span_left, span_right, expr, name):
-        super().__init__(msg, span_left, span_right, expr, name)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.error_scope = "parser"
 
 class InterpreterError(Error):
-    def __init__(self, msg, span_left, span_right, expr, name):
-        super().__init__(msg, span_left, span_right, expr, name)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.error_scope = "interpreter"
 
 class OperatorError(Error):
-    def __init__(self, msg, span_left, span_right, expr, name):
-        super().__init__(msg, span_left, span_right, expr, name)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.error_scope = "operator"
 
 class TypeRequirementError(Error):
@@ -86,6 +83,16 @@ class ONI:
     def function(_, __, context):
         return None, OperatorError(f"The '{context.self.value}' operator is not implemented yet.", *context.self.span, context.expr, "OperatorNotImplementedError")
 
+def callback_wrapper(result_err, *callback_args):
+    (result, err) = result_err
+    if err: return None, err.add_callback(*callback_args)
+    return result, None
+
+def err_wrapper(result_err, new_err):
+    (result, err) = result_err
+    if err: return None, new_err
+    return result, None
+    
 exp_error = module(__name__)
 
 info = package_info(exp_error, "exp_error@v1.1 –– the built-in error package", [exp_info])
