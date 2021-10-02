@@ -32,6 +32,8 @@ class Function:
             self.param = param
         self.context = context
         self.name = name
+        if name and len(name) > 210:
+            self.name = name[:200] + "..."
         self.override = override
         self.type_req = type_req
 
@@ -63,7 +65,10 @@ class Function:
             
     def __repr__(self):
         if self.name:
-            return f"<fn {self.name}>"
+            to_print = self.name
+            if len(self.name) > 60:
+                to_print = self.name[:50] + "..."
+            return f"<fn {to_print}>"
         if self.param:
             return f"<fn of {self.param}>"
         if self.override:
