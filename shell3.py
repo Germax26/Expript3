@@ -88,9 +88,6 @@ for category in operators.categories:
 
 variables = VARIABLE_LIST()
 
-for variable in library.values:
-    variables.add(VARIABLE(variable, library.values[variable]))
-
 def resolve_err(err):
     if err:
         try:
@@ -105,10 +102,18 @@ def resolve(source):
     if resolve_err(err): return
     if print_str := representer.represent(result) : print(print_str)
 
+
 for variable in library.variables:
-    result, err = evaluate(library.variables[variable], lexer, parser, interpreter, operators, variables)
-    if err: err.display(); sys.exit()
-    variables.add(VARIABLE(variable, result))
+    def get_var(variable):
+        def get():
+            return evaluate(library.variables[variable], lexer, parser, interpreter, operators, variables)
+        return get
+    variables.add_var(VARIABLE(variable, func=get_var(variable)))
+
+for variable in library.values:
+    variables.add_val(VARIABLE(variable, library.values[variable]))
+
+library.genesis = variables
 
 if src:
     try:

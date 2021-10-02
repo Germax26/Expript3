@@ -5,7 +5,7 @@ class LITERALS:
         self.literals = [
             (
                 lambda root, vars_: root.value in vars_, 
-                lambda root, vars_: vars_[root.value]()),
+                lambda root, vars_: vars_[root.value]),
             (
                 lambda root, _: root.value.isnumeric(), 
                 lambda root, _: (0, None) if root.value.count("0") == len(root.value) else (eval(root.value.lstrip("0")), None)),
