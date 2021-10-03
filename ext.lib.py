@@ -38,6 +38,18 @@ class Function:
         self.type_req = type_req
 
     def __call__(self, right, context):
+        try:
+            arg = right
+            if self.type_req:
+                param, err = (arg, None) if arg is not None else context.evaluate()
+                if err: return None, err
+                if not self.type_req.check([param, None]):
+                    return None, InterpreterError(f"Unpermitted type '{stringify(type(param))}' for {str(self)}. Expected otherwise.", *context.right.uberspan(), context.expr, "UnpermittedTypeError")
+            return self.call(arg, context)
+        except RecursionError:
+            return None, InterpreterError("Too much recursion.", *context.self.uberspan(), context.expr, "ExcessiveRecursionError")
+
+    def call(self, right, context):
         arg = None
 
         def get_param():
@@ -48,21 +60,13 @@ class Function:
             if err: return None, err
             return arg, None
 
-        # if self.type_req:
-        #     argument, err = get_param()
-        #     if err: return None, err
-        #     if not self.type_req.check([argument, None]):
-        #         return None, InterpreterError(f"Unpermitted type '{stringify(type(argument))}' for {str(self)}. Expected otherwise.", *context.right.uberspan(), context.expr, "UnpermittedTypeError")
+        if self.override:
+            param, err = get_param()
+            if err: return None, err
+            return self.override(param, context)
 
-        try:
-            if self.override:
-                param, err = get_param()
-                if err: return None, err
-                return self.override(param, context)
-            return self.context.evaluate(variables=self.context.variables.union(VARIABLE_LIST(VARIABLE(self.param, func=get_param))))
-        except RecursionError:
-            return None, InterpreterError("Too much recursion.", *context.self.uberspan(), context.expr, "ExcessiveRecursionError")
-            
+        return self.context.evaluate(variables=self.context.variables.union(VARIABLE_LIST(VARIABLE(self.param, func=get_param))))     
+
     def __repr__(self):
         if self.name:
             to_print = self.name
@@ -75,6 +79,23 @@ class Function:
             return f"<fn {self.override.__name__}>"
         return f"<fn {self}>"
 
+    def _name_(self):
+        if self.name is None:
+            return f"fn_of_{self.param}"
+        return self.name
+
+    def curry_call(self, args=[], contexts=[]):
+        assert len(contexts) >= len(args), "need more contexts"
+        f = self
+
+        for arg, context in zip(args, contexts):
+            if req_expfuncl.check([f, None]):
+                f, err = f(arg, context)
+                if err: return None, err
+            else:
+                return None, InterpreterError(f"Unperfmitted type '{stringify(type(arg))}' for {str(f)}. Expected otherwise.", *context.right.uberspan(), context.expr, "UnpermittedTypeError")
+        return f, None
+        
     def copy(self, new_name=None):
         return Function(self.context, new_name, self.override, self.type_req)
 
