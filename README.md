@@ -1,13 +1,45 @@
-# Expript3
-This is my customisable programming language, Expript3. There have been two previous versions of Expript3 called Expript and Expript2, but neither of them will be made public. 
+**Expript is currently under development. Not all of the things in this README are possible yet.**
+**Check the TODO section to see what has been implemented.** 
 
-## "Programming langauge"
-It is not a programming langauage in the conventional sense, but rather it is an expression evaluator. I have programmed my own operators for this language, including the => operator, which is very similar to the ```=>``` operator in JavaScript and the lambda keyword in Python. It acts in a very similar way, generating anonymous functions. Since, in conjuction with the ```<-``` operator (used for function application), this language can simulate [Lambda Calculus](https://en.wikipedia.org/wiki/Lambda_Calculus), it is therefore, [Turing-Complete](https://en.wikipedia.org/wiki/Turing_completeness). 
+# Expript3 - about
+Expript3 is a language engine that allows people to create their own expression based programming languages, in addition to other types of languages. I call languages made with Expript3 "Expript Languages". There have been previous versions of Expript, but they have not been fully implemented. They can still be accessed on GitHub if you want to see how bad they are.
 
-All the other operators are just for a nice time :)
+# How does Expript3 work?
+Expript3 will have things called "Models". These will indicate how a program is taken from its source code, either to be interpreted, or to be compiled. Each model will allow you to finetune and define things that the model uses to take the source code to the final output. For example, it can allow to set the syntax for a language. One of the main models will be the "Expression Model". It say will flow of different components such as the lexer, parser, and interpreter and/or computer. The expression model will allow you to define your own operators which can be used in expressions. Other models may be developed as well, for example the Postfix model. It will allow you to define what each word in the source code will do to the stack. Each instance of a model, where you have defined everything and done everything a model needs you to do, is an expript language. Through clever implenentations of things that a model needs, more complex things can be done, such as statements in an expression based language.
 
-## The language itself
-This langauge is an expression langauge, so all 'code' is actually one long expression. However, I have implemented the ```;``` operator, and what this allows you to do is to string multiple expressions. The ```;``` operator can use the result of the left expression when evaluating the right. For example, the code ```a = 1; a``` will evaluate to ```1``` because the ```;``` operator in the middle uses the result of the ```a = 1``` on its left to change how it evaluates the right. In this case, the result is a binding of ```a``` to ```1```. The ```;``` operator then evaluates ```a```, which because of the binding, it knows is equal to ```1```.
+# TODO
+This is the big list of things that I want to do. Check here to see if something in the README has been implemented. Anything with a *(maybe?)* next to it is being considered. It may or may not be implemented. 
 
-## More information
-More infomation can be found on the wiki for this github project. I'll be writing pages there when I can.
+- [x] Add Standard Expript Language (*STEL*)
+    - [x] Add [standard lexer](std.lxr.py)
+    - [x] Add [standard parser](std.psr.py)
+    - [x] Add [standard interpreter](std.int.py)
+    - [ ] Add [standard operaters](std.ops.py) 
+        - *some operators have not been fully implemented, but it's enough for now.*
+    - [x] Add [standard library](std.lib.py)
+    - [x] Add [standard literals](std.lit.py)
+    - [x] Add [standard representer](std.rpr.py)
+- [ ] Add Extended Expript Language (*EXEL*)
+    - [x] Add [extended libary](ext.lib.py).
+    - [x] Add [extended operators](ext.ops.py).
+- [ ] Refactoring
+	- [ ] Add Models
+		- [ ] Add Expression model
+			- [ ] Reimplement the standard expript language using the expression model
+			- [ ] Reimplement the extended expript language using the expression model
+			- [ ] Reimplement the lambda calculus expript language using the expression model
+		- [ ] Add Postfix model
+		- [ ] Add Prefix model *(maybe?)*
+	- [ ] Add Shell factory
+- [ ] Make Haskellesque expript language using the Expression Model (*HSEL*)
+	- ...
+	- ...
+- [ ] Implement in other languages
+	- [ ] Haskell (*Hexpript*)
+	- [ ] C (*Cexpript*)
+		- [ ] C++ (*CPexpript) *(maybe?)*
+	- [ ] Lisp (*Lexpript*)
+	- [ ] Java (*Jexpript*)
+	- [ ] JavaScript (*JSexpript*)
+	- [ ] Expript *(maybe?)*
+	- [ ] Porth *(maybe?)*
