@@ -149,7 +149,7 @@ while True:
         while True:
             try:
                 command = input("|> ").lower()
-            except EOFError: print("\nBye."); sys.exit(1)
+            except EOFError: print("\nBye."); sys.exit(0)
             except KeyboardInterrupt: break
             
             if not command: pass
@@ -163,7 +163,7 @@ while True:
             
             elif command == "q" or command == "quit":
                 print("Bye.")
-                sys.exit(1)
+                sys.exit(0)
             
             elif command == "db" or command == "debug":
                 debug = not debug
